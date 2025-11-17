@@ -1,6 +1,8 @@
 // Random events system
 class EventManager {
-    constructor() {
+    constructor(locationManager, timeManager) {
+        this.locationManager = locationManager;
+        this.timeManager = timeManager;
         this.events = [
             {
                 id: 'find-money',
@@ -54,12 +56,39 @@ class EventManager {
         return Math.floor(Math.random() * (max - min + 1)) + min;
     }
 
-    // Trigger random event based on probability
+    // Trigger random event based on probability (filtered by location/time)
     trigger(player) {
-        const roll = Math.random();
+        const location = this.locationManager.getCurrentLocation();
+        const hour = this.timeManager.getHour();
+        const isNight = this.timeManager.isNighttime();
+
+        // Filter events based on location and time
+        let availableEvents = this.events.filter(event => {
+            // Skip robbery if not at risky location
+            if (event.id === 'get-robbed') {
+                return location.id === 'park' && isNight;
+            }
+            // Skip sickness more often at shelter
+            if (event.id === 'get-sick') {
+                return location.id !== 'shelter';
+            }
+            // Generous strangers more common in rich areas during day
+            if (event.id === 'receive-food') {
+                return location.id === 'london-city' && !isNight;
+            }
+            // Find money more likely in busy areas
+            if (event.id === 'find-money') {
+                return location.id !== 'shelter';
+            }
+            return true;
+        });
+
+        // Recalculate probabilities
+        const totalChance = availableEvents.reduce((sum, e) => sum + e.chance, 0);
+        const roll = Math.random() * totalChance;
         let cumulative = 0;
 
-        for (const event of this.events) {
+        for (const event of availableEvents) {
             cumulative += event.chance;
             if (roll <= cumulative) {
                 const result = event.effect(player);
@@ -71,7 +100,7 @@ class EventManager {
             }
         }
 
-        // Fallback (should never happen if probabilities sum to 1)
+        // Fallback
         return null;
     }
 
