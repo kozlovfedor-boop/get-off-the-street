@@ -24,7 +24,7 @@ class UIManager {
 
     // Update all stat displays
     updateStats(player) {
-        this.elements.money.textContent = `$${player.money}`;
+        this.elements.money.textContent = `£${player.money}`;
         this.elements.health.textContent = player.health;
         this.elements.hunger.textContent = player.hunger;
         this.elements.day.textContent = player.day;
@@ -169,7 +169,7 @@ class UIManager {
             <div class="game-over">
                 <h2>GAME OVER</h2>
                 <p>You died on the streets after ${player.day} days.</p>
-                <p>Money earned: $${player.money}</p>
+                <p>Money earned: £${player.money}</p>
             </div>
         `;
 
@@ -183,7 +183,7 @@ class UIManager {
             <div class="victory">
                 <h2>CONGRATULATIONS!</h2>
                 <p>You survived ${player.day} days on the streets and saved enough money to rent an apartment!</p>
-                <p>Final money: $${player.money}</p>
+                <p>Final money: £${player.money}</p>
                 <p>You made it off the street!</p>
             </div>
         `;

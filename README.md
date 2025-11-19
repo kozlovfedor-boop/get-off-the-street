@@ -9,7 +9,7 @@ A turn-based survival RPG where you play as a homeless person trying to earn eno
 
 ## Game Overview
 
-**Goal:** Save $2,000 while maintaining your health to rent an apartment and win the game.
+**Goal:** Save £2,000 while maintaining your health to rent an apartment and win the game.
 
 **Lose Condition:** Your health reaches 0.
 
@@ -17,7 +17,7 @@ A turn-based survival RPG where you play as a homeless person trying to earn eno
 
 ## Stats
 
-- **Money**: Your savings. Need $2,000 to win.
+- **Money**: Your savings. Need £2,000 to win.
 - **Health**: If this reaches 0, you die. Can be restored by resting/sleeping.
 - **Hunger**: Decreases with most actions. If it drops below 20, you start losing health.
 - **Day**: Tracks how many days you've survived.
@@ -28,15 +28,15 @@ A turn-based survival RPG where you play as a homeless person trying to earn eno
 The game features 4 different locations, each with unique opportunities and risks:
 
 ### London City (Rich Business District)
-- **Work**: High pay ($30-60), available 8:00 AM - 6:00 PM
+- **Work**: High pay (£30-60), available 8:00 AM - 6:00 PM
 - **Police Risk**: Very high (30% when stealing)
-- **Panhandling**: Best earnings ($15-35)
+- **Panhandling**: Best earnings (£15-35)
 - **Travel Time**: 1 hour from Park, 0.5 hour from Shelter
 
 ### Camden Town (Industrial Area)
-- **Work**: Medium pay ($20-40), available 6:00 AM - 10:00 PM
+- **Work**: Medium pay (£20-40), available 6:00 AM - 10:00 PM
 - **Police Risk**: Moderate (15% when stealing)
-- **Panhandling**: Standard earnings ($5-20)
+- **Panhandling**: Standard earnings (£5-20)
 - **Travel Time**: 0.5 hour from Park, 1 hour from London City
 
 ### Homeless Shelter
@@ -50,7 +50,7 @@ The game features 4 different locations, each with unique opportunities and risk
 - **Open**: 24/7
 - **Sleep**: Risky (20-35 health, 25% robbery chance at night, 5% during day)
 - **Find Food**: Dumpster diving (20-45 hunger)
-- **Panhandling**: Available ($5-20)
+- **Panhandling**: Available (£5-20)
 - **Travel Time**: 1 hour to London City, 0.5 hour to Camden/Shelter
 
 ## Actions
@@ -88,7 +88,7 @@ Actions consume different amounts of time and affect your stats:
 - **High Risk**: Police encounter chance varies by location
 - **London City**: 30% police risk, caught = -25 health + fine
 - **Camden Town**: 15% police risk
-- If not caught: 70% success for $50-100, or get beaten (-15 health)
+- If not caught: 70% success for £50-100, or get beaten (-15 health)
 - Costs hunger (5-15)
 
 ### Travel (0.5-1 hour)
@@ -100,8 +100,8 @@ Actions consume different amounts of time and affect your stats:
 
 Random events occur based on location and time (20% chance per action):
 
-- **Find Money**: More likely in busy areas (+$5-20)
-- **Get Robbed**: Only at park during night (lose $10-40)
+- **Find Money**: More likely in busy areas (+£5-20)
+- **Get Robbed**: Only at park during night (lose £10-40)
 - **Get Sick**: Can happen anywhere except shelter (-15 health)
 - **Receive Food**: More likely in London City during day (+30 hunger)
 
@@ -129,7 +129,7 @@ Random events occur based on location and time (20% chance per action):
 
 ### Winning Strategy
 - You can win in 30-50 days with smart planning
-- Keep health above 20 when approaching $2,000
+- Keep health above 20 when approaching £2,000
 - Use shelter consistently for free meals and safe sleep
 
 ## Development

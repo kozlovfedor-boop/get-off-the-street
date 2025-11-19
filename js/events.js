@@ -10,7 +10,7 @@ class EventManager {
                 effect: (player) => {
                     const amount = this.random(5, 20);
                     player.addMoney(amount);
-                    return `+$${amount}`;
+                    return `+£${amount}`;
                 },
                 chance: 0.15
             },
@@ -20,7 +20,7 @@ class EventManager {
                 effect: (player) => {
                     const loss = Math.min(this.random(10, 40), player.money);
                     player.removeMoney(loss);
-                    return `-$${loss}`;
+                    return `-£${loss}`;
                 },
                 chance: 0.10
             },

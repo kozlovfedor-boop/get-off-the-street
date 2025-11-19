@@ -23,7 +23,7 @@ class ActionManager {
         const location = this.locationManager.getCurrentLocation();
         return {
             type: 'work',
-            message: `You found work in ${location.name}. Earned $${earnings}. Hunger -${hungerCost}.`,
+            message: `You found work in ${location.name}. Earned £${earnings}. Hunger -${hungerCost}.`,
             logType: 'positive',
             timeCost: CONFIG.TIME_COSTS.WORK
         };
@@ -76,7 +76,7 @@ class ActionManager {
             if (Math.random() < risk) {
                 const stolenAmount = Math.min(this.random(10, 30), this.player.money);
                 this.player.removeMoney(stolenAmount);
-                message = `You slept in the park but got robbed! Lost $${stolenAmount}. Health +${healthGain}, Hunger -${hungerCost}.`;
+                message = `You slept in the park but got robbed! Lost £${stolenAmount}. Health +${healthGain}, Hunger -${hungerCost}.`;
             } else {
                 message = `You slept in the park. Health +${healthGain}, Hunger -${hungerCost}.`;
             }
@@ -119,7 +119,7 @@ class ActionManager {
 
         return {
             type: 'panhandle',
-            message: `You panhandled for money. Earned $${earnings}. Hunger -${hungerCost}.`,
+            message: `You panhandled for money. Earned £${earnings}. Hunger -${hungerCost}.`,
             logType: 'positive',
             timeCost: CONFIG.TIME_COSTS.PANHANDLE
         };
@@ -135,13 +135,13 @@ class ActionManager {
             this.player.modifyHealth(-25);
             const fine = Math.min(this.random(20, 50), this.player.money);
             this.player.removeMoney(fine);
-            message = `You got caught by police! Lost $${fine} and got beaten. Health -25.`;
+            message = `You got caught by police! Lost £${fine} and got beaten. Health -25.`;
         } else {
             const success = Math.random() > 0.3; // 70% success if no police
             if (success) {
                 const stolen = this.random(50, 100);
                 this.player.addMoney(stolen);
-                message = `You successfully stole $${stolen}!`;
+                message = `You successfully stole £${stolen}!`;
             } else {
                 this.player.modifyHealth(-15);
                 message = "You got caught by someone and got beaten up. Health -15.";

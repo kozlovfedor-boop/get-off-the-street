@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 "Get off the Street" is a turn-based survival RPG built with vanilla HTML, CSS, and JavaScript. No build process, dependencies, or frameworks required.
 
-**Goal:** Player starts homeless and must survive to save $2,000 to rent an apartment.
+**Goal:** Player starts homeless and must survive to save £2,000 to rent an apartment.
 
 **Current Version:** 2.0.0 - Locations and Time of Day System
 
@@ -206,14 +206,14 @@ All in `config.js`:
 - `TIME_COSTS` - How long each action takes
 
 Action ranges in `actions.js`:
-- Work: $20-40 base * location modifier (London 1.5x, Camden 1.0x)
+- Work: £20-40 base * location modifier (London 1.5x, Camden 1.0x)
 - Food (dumpster): +20-45 hunger
 - Eat (shelter): +40-60 hunger
 - Sleep (shelter): +30-50 health, safe
 - Sleep (park): +20-35 health, 25% robbery risk at night
 - Rest (streets): +10-20 health
-- Panhandle: $15-35 (London City), $5-20 (elsewhere)
-- Steal: 30% police (London), 15% police (Camden), then 70% success for $50-100
+- Panhandle: £15-35 (London City), £5-20 (elsewhere)
+- Steal: 30% police (London), 15% police (Camden), then 70% success for £50-100
 
 Location travel times in `locations.js`:
 - Adjacent locations: 0.5 hours
