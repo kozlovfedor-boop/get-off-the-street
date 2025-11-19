@@ -15,7 +15,7 @@ class Game {
     // Initialize the game
     init() {
         this.ui.updateAll(this.player);
-        this.ui.addLog("Game started. Goal: Save $2,000 to rent an apartment.", "neutral", this.player.day, this.timeManager.formatTime());
+        // Initial log is now added when user clicks "Start Game" button
     }
 
     // Perform an action

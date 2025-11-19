@@ -6,33 +6,71 @@ class UIManager {
 
         this.elements = {
             money: document.getElementById('money'),
-            health: document.getElementById('health'),
-            hunger: document.getElementById('hunger'),
+            healthValue: document.getElementById('health-value'),
+            healthBar: document.getElementById('health-bar'),
+            hungerValue: document.getElementById('hunger-value'),
+            hungerBar: document.getElementById('hunger-bar'),
             day: document.getElementById('day'),
             time: document.getElementById('time'),
+            timePeriod: document.getElementById('time-period'),
             location: document.getElementById('location'),
             locationDesc: document.getElementById('location-desc'),
             story: document.getElementById('story'),
             gameStatus: document.getElementById('game-status'),
             actions: document.getElementById('actions'),
-            log: document.getElementById('log')
+            log: document.getElementById('log'),
+            startGameBtn: document.getElementById('start-game'),
+            gameContent: document.getElementById('game-content')
         };
 
         this.logEntries = [];
         this.travelMode = false;
+        this.gameStarted = false;
+
+        // Set up start game button listener
+        this.elements.startGameBtn.addEventListener('click', () => this.dismissIntro());
+
+        // Show intro text on initial load
+        this.showIntro();
     }
 
     // Update all stat displays
     updateStats(player) {
+        // Update money
         this.elements.money.textContent = `£${player.money}`;
-        this.elements.health.textContent = player.health;
-        this.elements.hunger.textContent = player.hunger;
+
+        // Update health
+        this.elements.healthValue.textContent = player.health;
+        this.elements.healthBar.style.width = `${player.health}%`;
+
+        // Add critical class if health < 20
+        const healthBarParent = this.elements.healthBar.closest('.health-bar');
+        if (player.health < CONFIG.STARVATION_THRESHOLD) {
+            healthBarParent.classList.add('critical');
+        } else {
+            healthBarParent.classList.remove('critical');
+        }
+
+        // Update hunger
+        this.elements.hungerValue.textContent = player.hunger;
+        this.elements.hungerBar.style.width = `${player.hunger}%`;
+
+        // Add critical class if hunger < 20
+        const hungerBarParent = this.elements.hungerBar.closest('.hunger-bar');
+        if (player.hunger < CONFIG.STARVATION_THRESHOLD) {
+            hungerBarParent.classList.add('critical');
+        } else {
+            hungerBarParent.classList.remove('critical');
+        }
+
+        // Update day
         this.elements.day.textContent = player.day;
     }
 
     // Update time display
     updateTime() {
         this.elements.time.textContent = this.timeManager.formatTime();
+        this.elements.timePeriod.textContent = this.timeManager.getTimePeriod();
     }
 
     // Update location display
@@ -163,6 +201,39 @@ class UIManager {
         this.elements.log.innerHTML = '';
     }
 
+    // Show intro text
+    showIntro() {
+        const introLines = CONFIG.INTRO_TEXT.split('\n\n');
+        let introHTML = '';
+        introLines.forEach(line => {
+            introHTML += `<p>${line}</p>`;
+        });
+
+        this.elements.story.innerHTML = introHTML + '<button class="start-game-btn" id="start-game">Start Game</button>';
+
+        // Re-attach event listener after innerHTML update
+        this.elements.startGameBtn = document.getElementById('start-game');
+        this.elements.startGameBtn.addEventListener('click', () => this.dismissIntro());
+
+        this.elements.story.classList.remove('hidden');
+        this.elements.gameContent.classList.add('hidden');
+        this.gameStarted = false;
+    }
+
+    // Dismiss intro and move to log
+    dismissIntro() {
+        if (this.gameStarted) return;
+
+        // Add intro text to log
+        this.addLog(CONFIG.INTRO_TEXT, 'neutral', 1, this.timeManager.formatTime());
+
+        // Hide story div and show game content
+        this.elements.story.classList.add('hidden');
+        this.elements.gameContent.classList.remove('hidden');
+
+        this.gameStarted = true;
+    }
+
     // Show game over screen
     showGameOver(player) {
         this.elements.gameStatus.innerHTML = `
@@ -217,12 +288,7 @@ class UIManager {
     reset() {
         this.elements.gameStatus.innerHTML = '';
         this.clearLog();
-        this.elements.story.innerHTML = `
-            <p>You wake up in the park on a cold morning. Everything you owned is gone. No home. No job. No money.</p>
-            <p>You need to survive on the streets and save $2,000 to rent an apartment and start over.</p>
-            <p>What will you do?</p>
-        `;
-
+        this.showIntro();
         this.renderActionButtons();
     }
 

@@ -27,6 +27,7 @@ const CONFIG = {
 
     // UI
     MAX_LOG_ENTRIES: 20,
+    INTRO_TEXT: "You wake up on a cold park bench. Everything you owned is gone. No home. No job. No money.\n\nYou need to survive on the streets and save £2,000 to rent an apartment and start over.\n\nWhat will you do?",
 
     // Time constants (in hours)
     TIME_COSTS: {

@@ -41,19 +41,47 @@ h1 {
     font-size: 0.9em;
 }
 
+.game-content.hidden {
+    display: none;
+}
+
 .stats {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 12px;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto auto;
+    gap: 15px;
     padding: 20px;
     background: #1f1f1f;
     border-bottom: 2px solid #444;
 }
 
-@media (max-width: 768px) {
-    .stats {
-        grid-template-columns: repeat(2, 1fr);
-    }
+.stat-group-left {
+    grid-column: 1;
+    grid-row: 1;
+    display: flex;
+    align-items: stretch;
+}
+
+.stat-group-right {
+    grid-column: 2;
+    grid-row: 1;
+    text-align: right;
+    display: flex;
+    align-items: stretch;
+}
+
+.stat-bar {
+    grid-column: 1;
+}
+
+.health-bar {
+    grid-row: 2;
+    border-left: 4px solid #ff6b6b;
+}
+
+.hunger-bar {
+    grid-row: 3;
+    border-left: 4px solid #ffa500;
 }
 
 .stat {
@@ -89,6 +117,131 @@ h1 {
 .stat.time .stat-value { color: #9c27b0; }
 .stat.time { border-left-color: #9c27b0; }
 
+/* New Money Display */
+.stat-money {
+    background: #2a2a2a;
+    padding: 15px;
+    border-radius: 5px;
+    border-left: 4px solid #4ecb71;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.stat-money .stat-label {
+    color: #888;
+    font-size: 0.85em;
+    margin-bottom: 8px;
+}
+
+.stat-money .stat-value {
+    font-size: 1.4em;
+    font-weight: bold;
+    color: #4ecb71;
+}
+
+.stat-money .goal {
+    color: #888;
+    font-size: 0.9em;
+}
+
+/* Date/Time Display */
+.stat-datetime {
+    background: #2a2a2a;
+    padding: 15px;
+    border-radius: 5px;
+    border-right: 4px solid #64b5f6;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.datetime-main {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #64b5f6;
+    margin-bottom: 5px;
+}
+
+.datetime-period {
+    font-size: 0.85em;
+    color: #64b5f6;
+    font-style: italic;
+}
+
+/* Progress Bars */
+.stat-bar {
+    background: #2a2a2a;
+    padding: 12px;
+    border-radius: 5px;
+}
+
+.stat-bar-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 0.85em;
+    color: #888;
+}
+
+.stat-bar-value {
+    font-weight: bold;
+    font-size: 1.1em;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 20px;
+    background: #1a1a1a;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid #444;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    transition: width 0.3s ease, background 0.3s ease;
+    border-radius: 10px;
+}
+
+.health-fill {
+    background: linear-gradient(90deg, #ff6b6b 0%, #ff8787 100%);
+}
+
+.health-bar .stat-bar-value {
+    color: #ff6b6b;
+}
+
+.health-bar.critical .health-fill {
+    background: linear-gradient(90deg, #ff3333 0%, #ff6b6b 100%);
+    animation: pulse 1s infinite;
+}
+
+.hunger-fill {
+    background: linear-gradient(90deg, #ffa500 0%, #ffb733 100%);
+}
+
+.hunger-bar .stat-bar-value {
+    color: #ffa500;
+}
+
+.hunger-bar.critical .hunger-fill {
+    background: linear-gradient(90deg, #ff8800 0%, #ffa500 100%);
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.6;
+    }
+}
+
 .location-info {
     background: #1a1a1a;
     padding: 15px 20px;
@@ -123,11 +276,36 @@ h1 {
 .story {
     background: #1f1f1f;
     padding: 20px;
+    margin: 20px;
     border-radius: 5px;
     min-height: 150px;
-    margin-bottom: 20px;
     border: 1px solid #333;
     line-height: 1.6;
+}
+
+.story.hidden {
+    display: none;
+}
+
+.start-game-btn {
+    display: block;
+    margin: 20px auto 0;
+    padding: 15px 40px;
+    font-size: 1.2em;
+    font-weight: bold;
+    background: #4ecb71;
+    border: 3px solid #3eb861;
+    color: #1a1a1a;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.3s;
+}
+
+.start-game-btn:hover {
+    background: #5edb81;
+    border-color: #4ecb71;
+    transform: scale(1.05);
+    box-shadow: 0 5px 15px rgba(78, 203, 113, 0.4);
 }
 
 .event-message {
