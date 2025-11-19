@@ -177,8 +177,9 @@ Built with vanilla HTML, CSS, and JavaScript. No build process or dependencies r
 
 ---
 
-**Current Version:** 2.0.0
+**Current Version:** 2.1.0
 
 **Changelog:**
+- **v2.1.0**: UI redesign with progress bars and improved stats layout
 - **v2.0.0**: Added locations and time of day system
 - **v1.0.0**: Initial MVP release

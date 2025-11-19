@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Goal:** Player starts homeless and must survive to save £2,000 to rent an apartment.
 
-**Current Version:** 2.0.0 - Locations and Time of Day System
+**Current Version:** 2.1.0 - UI Redesign with Progress Bars
 
 ## Running the Game
 
@@ -90,6 +90,7 @@ The codebase follows a **modular class-based architecture** for scalability:
 - `renderActionButtons()` - dynamically creates buttons based on location + time
 - `showTravelMenu()` - displays travel destination options
 - Manages log entries (max 20 entries)
+- Handles progress bar updates and critical state animations
 - Event-driven via dynamically created buttons
 
 **game.js** - Main controller
@@ -254,7 +255,50 @@ Event probabilities in `events.js`:
 - Adjust risk modifiers in locations.js
 - Adjust event probabilities in events.js
 
+## UI Design (v2.1.0)
+
+**Stats Layout** - Grid-based responsive design:
+```
+┌─────────────────────────────────────┐
+│  [MONEY]            [DATE/TIME]     │
+│  £0 / £2,000        Day 1, 06:00    │
+│  (green border)     Morning         │
+│                     (blue border)   │
+├─────────────────────────────────────┤
+│  [HEALTH]                           │
+│  Progress bar (red gradient)        │
+│  (red left border)                  │
+├─────────────────────────────────────┤
+│  [HUNGER]                           │
+│  Progress bar (orange gradient)     │
+│  (orange left border)               │
+└─────────────────────────────────────┘
+```
+
+**Key UI Features:**
+- **Money Display**: Left-aligned, shows current/goal (£0 / £2,000), green left border
+- **Date/Time Display**: Right-aligned, shows day/time/period, blue right border, consistent blue color scheme
+- **Health Bar**: Left-aligned progress bar (0-100), red gradient fill, red left border, pulses when critical (<20)
+- **Hunger Bar**: Left-aligned progress bar (0-100), orange gradient fill, orange left border, pulses when critical (<20)
+- **Color Coding**: Each stat has consistent color theme (borders match fill colors)
+- **Critical States**: Progress bars pulse with animation when health/hunger drops below 20
+
+**CSS Grid Layout:**
+```css
+.stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto auto;
+    gap: 15px;
+}
+```
+
+Row 1: Money (col 1) + Date/Time (col 2)
+Row 2: Health bar (col 1, left-aligned)
+Row 3: Hunger bar (col 1, left-aligned)
+
 ## Version History
 
+- **v2.1.0**: UI redesign with progress bars and improved stats layout
 - **v2.0.0**: Locations and time of day system
 - **v1.0.0**: Initial MVP with basic survival mechanics
