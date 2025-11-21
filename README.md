@@ -141,7 +141,10 @@ Built with vanilla HTML, CSS, and JavaScript. No build process or dependencies r
 - `TimeManager`: 24-hour clock and time progression
 - `LocationManager`: Location definitions and travel
 - `EventManager`: Random events with location/time awareness
-- `ActionManager`: All player actions
+- **Action System** (js/actions/): Factory-based action classes
+  - Each action type in separate file
+  - Factory pattern for instantiation
+  - Inheritance from BaseAction class
 - `UIManager`: DOM manipulation and rendering
 - `Game`: Main controller
 
@@ -157,7 +160,16 @@ Built with vanilla HTML, CSS, and JavaScript. No build process or dependencies r
 │   ├── time.js         # Time management
 │   ├── locations.js    # Location system
 │   ├── events.js       # Random events
-│   ├── actions.js      # Player actions
+│   ├── actions/        # Action system
+│   │   ├── base-action.js      # Base action class
+│   │   ├── action-utils.js     # Shared utilities
+│   │   ├── work-action.js      # Work action
+│   │   ├── panhandle-action.js # Panhandle action
+│   │   ├── find-food-action.js # Find food action
+│   │   ├── sleep-action.js     # Sleep/rest action
+│   │   ├── steal-action.js     # Steal action
+│   │   ├── eat-action.js       # Eat action
+│   │   └── action-factory.js   # Action factory
 │   ├── ui.js           # UI management
 │   └── game.js         # Main controller
 └── README.md

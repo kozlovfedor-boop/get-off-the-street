@@ -35,7 +35,16 @@ The codebase follows a **modular class-based architecture** for scalability:
 │   ├── time.js             # TimeManager class - 24-hour clock
 │   ├── locations.js        # LocationManager class - locations & travel
 │   ├── events.js           # EventManager class - random events
-│   ├── actions.js          # ActionManager class - player actions
+│   ├── actions/            # Action system (factory pattern + inheritance)
+│   │   ├── base-action.js      # BaseAction class - abstract base
+│   │   ├── action-utils.js     # Shared utility functions
+│   │   ├── work-action.js      # WorkAction class
+│   │   ├── panhandle-action.js # PanhandleAction class
+│   │   ├── find-food-action.js # FindFoodAction class
+│   │   ├── sleep-action.js     # SleepAction class
+│   │   ├── steal-action.js     # StealAction class
+│   │   ├── eat-action.js       # EatAction class
+│   │   └── action-factory.js   # createAction() factory function
 │   ├── ui.js               # UIManager class - DOM manipulation
 │   └── game.js             # Game class - main controller
 └── README.md
@@ -77,12 +86,22 @@ The codebase follows a **modular class-based architecture** for scalability:
 - `trigger()` uses cumulative probability distribution
 - Extensible: `addEvent()`, `removeEvent()`, `getEvent()` methods
 
-**actions.js** - Player actions
-- `ActionManager` class handles all player actions
-- Actions: `findWork()`, `findFood()`, `eat()`, `sleep()`, `rest()`, `panhandle()`, `steal()`
-- All actions now return `{type, message, logType, timeCost}`
-- Actions are location-aware (use locationManager for pay/risk modifiers)
-- `applyStarvation()` applies hunger penalty
+**actions/** - Action System (Factory Pattern + Inheritance)
+- **Factory Pattern**: `createAction()` instantiates appropriate action class based on type
+- **Inheritance**: All actions extend `BaseAction` class
+- **BaseAction** (base-action.js):
+  - Abstract base class with common functionality
+  - Methods: `isInstant()`, `applyStats()`, `clampStats()`, `random()`
+  - Abstract methods to override: `execute()`, `calculatePerHourStats()`, `generateLogMessage()`
+- **Individual Action Classes**:
+  - `WorkAction` (work-action.js) - 7 hours, deferred payment, accumulates earnings
+  - `PanhandleAction` (panhandle-action.js) - 3 hours, immediate payment each hour
+  - `FindFoodAction` (find-food-action.js) - 2 hours, random hunger gain per hour
+  - `SleepAction` (sleep-action.js) - 7/2 hours, health recovery (location-dependent)
+  - `StealAction` (steal-action.js) - 1 hour, risky outcomes (police/robbery)
+  - `EatAction` (eat-action.js) - Instant, dedicated shelter action
+- **Action Factory** (action-factory.js): Creates appropriate action instance via switch statement
+- **Action Utils** (action-utils.js): Shared utilities (`random()`, `applyStarvation()`)
 
 **ui.js** - UI management
 - `UIManager` class handles all DOM updates
@@ -95,11 +114,13 @@ The codebase follows a **modular class-based architecture** for scalability:
 
 **game.js** - Main controller
 - `Game` class orchestrates all other modules
-- Owns instances of: Player, TimeManager, LocationManager, EventManager, ActionManager, UIManager
-- `performAction(actionType)` - main action handler
+- Owns instances of: Player, TimeManager, LocationManager, EventManager, UIManager
+- Uses: Action factory pattern (no ActionManager instance)
+- `performAction(actionType)` - creates action via factory, executes it
+- `executeAction(action, result)` - hour-by-hour execution with per-hour stats and logging
 - `travel(destinationId)` - handles location changes
 - `advanceTime(hours)` - processes time advancement, starvation, events, game state
-- Turn flow: action → time advance → starvation check → random event → game state check → UI update
+- Turn flow: action creation → execution → per-hour processing → time advance → starvation check → random event → game state check → UI update
 
 ### Data Flow
 
@@ -110,18 +131,27 @@ UIManager dynamically created onclick calls game.performAction('work')
   ↓
 Game checks locationManager.isActionAvailable('work')
   ↓
-Game calls actionManager.findWork()
+Game calls createAction('work', player, locationManager, timeManager)
   ↓
-ActionManager uses locationManager.getPayModifier() to calculate earnings
-ActionManager modifies player stats via player.addMoney(), player.modifyHunger()
-Returns {type, message, logType, timeCost}
+Factory returns WorkAction instance
   ↓
-Game.advanceTime() processes:
-  - timeManager.advanceTime(timeCost) → returns daysElapsed
-  - player.nextDay() if days elapsed
-  - actionManager.applyStarvation()
-  - eventManager.trigger() (20% chance, location/time filtered)
-  - Game.checkGameState()
+Game calls workAction.execute()
+  ↓
+WorkAction uses locationManager.getPayModifier() to calculate earnings
+Returns {type, message, logType, timeCost, statChanges, perHourCalculation}
+  ↓
+Game calls game.executeAction(workAction, result)
+  ↓
+For each hour (hour-by-hour execution):
+  - workAction.calculatePerHourStats(hourIndex) → {moneyChange, healthChange, hungerChange}
+  - Animate time and stats for this hour
+  - workAction.clampStats() → enforce stat limits
+  - workAction.generateLogMessage() → per-hour log entry
+  - executeHourTick() → starvation check, random events, game state check
+  ↓
+If deferred payment (work):
+  - workAction.getFinalPayment() → accumulated earnings
+  - workAction.getFinalLogMessage() → final summary
   ↓
 Game calls ui.updateAll(player)
   ↓
@@ -129,6 +159,45 @@ UI updates: stats, time display, location display, re-renders action buttons
 ```
 
 ### Key Game Systems
+
+**Action System Architecture**
+
+The action system uses a **factory pattern** with **inheritance** for flexible, maintainable action handling.
+
+*Design Pattern:*
+```
+BaseAction (Abstract)
+├── WorkAction
+├── PanhandleAction
+├── FindFoodAction
+├── SleepAction
+├── StealAction
+└── EatAction
+```
+
+*Action Lifecycle:*
+1. **Creation**: Factory creates appropriate action instance via `createAction(type, player, locationManager, timeManager)`
+2. **Execution**: `action.execute()` generates outcome → returns `{type, message, logType, timeCost, statChanges, perHourCalculation}`
+3. **Per-Hour Processing**: For each hour, `action.calculatePerHourStats(hourIndex)` → `{moneyChange, healthChange, hungerChange}`
+4. **Logging**: For each hour, `action.generateLogMessage(hourIndex, totalHours, stats)` → formatted log entry
+5. **Completion**: Final payment if deferred (work), game state checks
+
+*Key Methods in BaseAction:*
+- `execute()` - Generate action outcome (called once, returns result object)
+- `calculatePerHourStats(hourIndex)` - Per-hour stat changes (called each hour)
+- `generateLogMessage(hourIndex, totalHours, stats)` - Per-hour log message (called each hour)
+- `isInstant()` - Whether action completes instantly (timeCost === 0)
+- `shouldDeferPayment()` - Whether to delay payment until end (work only)
+- `applyStats(money, health, hunger)` - Apply stat changes to player
+- `clampStats()` - Enforce stat limits (health 0-100, hunger 0-100, money >= 0)
+- `random(min, max)` - Utility for random number generation
+
+*Benefits:*
+- **Separation of Concerns**: Each action in its own file
+- **Open/Closed Principle**: Add new actions without modifying existing code
+- **Testability**: Each action can be tested independently
+- **Maintainability**: Clear structure, easy to locate action logic
+- **Consistency**: All actions follow same interface and patterns
 
 **Time System**
 - Tracks decimal hours (9.5 = 9:30, 14.75 = 14:45)
@@ -167,17 +236,80 @@ UI updates: stats, time display, location display, re-renders action buttons
 4. Update `UIManager.updateStats()` in ui.js
 
 **Adding new actions:**
-1. Add method to `ActionManager` in actions.js (must return timeCost)
-2. Add action to location's actions array in locations.js
-3. Add case in `Game.performAction()` switch statement in game.js
-4. Add button styling in styles.css
-5. Add action name mapping in `UIManager.createActionButton()`
+
+1. **Create new action class file** in `js/actions/` (e.g., `beg-action.js`):
+   ```javascript
+   // Beg action - ask for help (2 hours)
+   class BegAction extends BaseAction {
+       execute() {
+           // Generate outcome and return result object
+           const earnings = this.random(5, 15);
+           const hungerCost = this.random(3, 7);
+
+           return {
+               type: 'beg',
+               message: `You begged for help. Earned £${earnings}. Hunger -${hungerCost}.`,
+               logType: 'neutral',
+               timeCost: 2,
+               statChanges: {
+                   money: earnings,
+                   health: 0,
+                   hunger: -hungerCost
+               },
+               perHourCalculation: 'beg'
+           };
+       }
+
+       calculatePerHourStats(hourIndex) {
+           // Per-hour logic (random money each hour)
+           return {
+               moneyChange: this.random(2, 7),
+               healthChange: 0,
+               hungerChange: -this.random(1, 3)
+           };
+       }
+
+       generateLogMessage(hourIndex, totalHours, stats) {
+           // Log message for each hour
+           return {
+               message: `Begging: Hour ${hourIndex + 1}/${totalHours} - Earned £${stats.moneyChange}, Hunger ${stats.hungerChange}`,
+               logType: 'neutral'
+           };
+       }
+   }
+   ```
+
+2. **Add to factory** (`action-factory.js`):
+   ```javascript
+   case 'beg':
+       return new BegAction(player, locationManager, timeManager);
+   ```
+
+3. **Add script tag** to `index.html` (after base-action.js, before action-factory.js):
+   ```html
+   <script src="js/actions/beg-action.js"></script>
+   ```
+
+4. **Add to location's actions array** in `locations.js`:
+   ```javascript
+   actions: ['work', 'food', 'beg', 'rest']  // Add 'beg'
+   ```
+
+5. **Add button styling** in `styles.css`:
+   ```css
+   .beg { background: linear-gradient(135deg, #9c27b0, #673ab7); }
+   ```
+
+6. **Add action name mapping** in `UIManager.createActionButton()` (ui.js):
+   ```javascript
+   case 'beg': return 'Beg for Help';
+   ```
 
 **Adding new locations:**
 1. Add location object to `locations` in LocationManager constructor
 2. Define: id, name, description, actions array, travelTime object
 3. Update `CONFIG.LOCATIONS` if needed
-4. Add location-specific logic in actions.js if needed
+4. Add location-specific logic in action class files if needed (e.g., pay modifiers in WorkAction)
 
 **Adding new events:**
 ```javascript
@@ -206,7 +338,7 @@ All in `config.js`:
 - `INITIAL_LOCATION: 'park'` - Start at park
 - `TIME_COSTS` - How long each action takes
 
-Action ranges in `actions.js`:
+Action ranges (in action class files):
 - Work: £20-40 base * location modifier (London 1.5x, Camden 1.0x)
 - Food (dumpster): +20-45 hunger
 - Eat (shelter): +40-60 hunger
@@ -227,11 +359,14 @@ Event probabilities in `events.js`:
 
 ## Design Patterns Used
 
-- **Separation of Concerns**: Each class has single responsibility
-- **Dependency Injection**: Game class receives dependencies via constructor
+- **Factory Pattern**: Action creation via `createAction()` factory function
+- **Template Method Pattern**: `BaseAction` with overridable methods (`execute()`, `calculatePerHourStats()`, `generateLogMessage()`)
+- **Inheritance**: All action classes extend `BaseAction` for code reuse
+- **Separation of Concerns**: Each class/module has single responsibility
+- **Dependency Injection**: Classes receive dependencies via constructor
 - **Dynamic UI**: Buttons created dynamically based on location/time state
 - **Configuration Object**: All constants centralized in CONFIG
-- **Manager Pattern**: Separate managers for Time, Location, Events, Actions, UI
+- **Manager Pattern**: Separate managers for Time, Location, Events, UI
 - **State Machine**: Location and time determine available actions
 
 ## Common Development Tasks
@@ -250,7 +385,7 @@ Event probabilities in `events.js`:
 3. Add travel times from/to other locations
 
 **Balancing game difficulty:**
-- Adjust pay in actions.js
+- Adjust pay in action class files (work-action.js, panhandle-action.js, etc.)
 - Adjust time costs in config.js
 - Adjust risk modifiers in locations.js
 - Adjust event probabilities in events.js
