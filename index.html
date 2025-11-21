@@ -19,18 +19,63 @@
         </div>
 
         <div class="game-content hidden" id="game-content">
-            <div class="stats">
-                <!-- Top Row: Money (left) and Date/Time (right) -->
-                <div class="stat-group-left">
+            <div class="game-container">
+                <!-- Left Column: Stats -->
+                <div class="stats-column">
                     <div class="stat-money">
                         <div class="stat-label">MONEY</div>
                         <div class="stat-value">
                             <span id="money">£0</span> / <span class="goal">£2,000</span>
                         </div>
                     </div>
+
+                    <div class="stat-bar health-bar">
+                        <div class="stat-bar-label">
+                            <span>HEALTH</span>
+                            <span class="stat-bar-value" id="health-value">100</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-bar-fill health-fill" id="health-bar" style="width: 100%"></div>
+                        </div>
+                    </div>
+
+                    <div class="stat-bar hunger-bar">
+                        <div class="stat-bar-label">
+                            <span>HUNGER</span>
+                            <span class="stat-bar-value" id="hunger-value">50</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-bar-fill hunger-fill" id="hunger-bar" style="width: 50%"></div>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="stat-group-right">
+                <!-- Center Column: Game Area -->
+                <div class="game-column">
+                    <div class="location-info">
+                        <div class="location-name">
+                            <span class="label">Location:</span>
+                            <span class="value" id="location">City Park</span>
+                        </div>
+                        <div class="location-description" id="location-desc">Public park. Free but risky at night.</div>
+                    </div>
+
+                    <div class="game-area">
+                        <div id="game-status"></div>
+
+                        <div class="actions" id="actions">
+                            <button class="work" data-action="work">Find Work</button>
+                            <button class="food" data-action="food">Find Food</button>
+                            <button class="rest" data-action="rest">Rest</button>
+                            <button class="steal" data-action="steal">Steal</button>
+                        </div>
+
+                        <div class="log" id="log"></div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Date/Time -->
+                <div class="datetime-column">
                     <div class="stat-datetime">
                         <div class="datetime-main">
                             Day <span id="day">1</span>, <span id="time">06:00</span>
@@ -38,49 +83,6 @@
                         <div class="datetime-period" id="time-period">Morning</div>
                     </div>
                 </div>
-
-                <!-- Full Width: Health Progress Bar -->
-                <div class="stat-bar health-bar">
-                    <div class="stat-bar-label">
-                        <span>HEALTH</span>
-                        <span class="stat-bar-value" id="health-value">100</span>
-                    </div>
-                    <div class="progress-bar">
-                        <div class="progress-bar-fill health-fill" id="health-bar" style="width: 100%"></div>
-                    </div>
-                </div>
-
-                <!-- Full Width: Hunger Progress Bar -->
-                <div class="stat-bar hunger-bar">
-                    <div class="stat-bar-label">
-                        <span>HUNGER</span>
-                        <span class="stat-bar-value" id="hunger-value">50</span>
-                    </div>
-                    <div class="progress-bar">
-                        <div class="progress-bar-fill hunger-fill" id="hunger-bar" style="width: 50%"></div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="location-info">
-                <div class="location-name">
-                    <span class="label">Location:</span>
-                    <span class="value" id="location">City Park</span>
-                </div>
-                <div class="location-description" id="location-desc">Public park. Free but risky at night.</div>
-            </div>
-
-            <div class="game-area">
-                <div id="game-status"></div>
-
-                <div class="actions" id="actions">
-                    <button class="work" data-action="work">Find Work</button>
-                    <button class="food" data-action="food">Find Food</button>
-                    <button class="rest" data-action="rest">Rest</button>
-                    <button class="steal" data-action="steal">Steal</button>
-                </div>
-
-                <div class="log" id="log"></div>
             </div>
         </div>
     </div>
@@ -91,7 +93,15 @@
     <script src="js/time.js"></script>
     <script src="js/locations.js"></script>
     <script src="js/events.js"></script>
-    <script src="js/actions.js"></script>
+    <script src="js/actions/action-utils.js"></script>
+    <script src="js/actions/base-action.js"></script>
+    <script src="js/actions/work-action.js"></script>
+    <script src="js/actions/panhandle-action.js"></script>
+    <script src="js/actions/find-food-action.js"></script>
+    <script src="js/actions/sleep-action.js"></script>
+    <script src="js/actions/steal-action.js"></script>
+    <script src="js/actions/eat-action.js"></script>
+    <script src="js/actions/action-factory.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/game.js"></script>
 </body>

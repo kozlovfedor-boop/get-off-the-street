@@ -36,11 +36,11 @@ class UIManager {
 
     // Update all stat displays
     updateStats(player) {
-        // Update money
-        this.elements.money.textContent = `£${player.money}`;
+        // Update money (format as whole number)
+        this.elements.money.textContent = `£${Math.floor(player.money)}`;
 
-        // Update health
-        this.elements.healthValue.textContent = player.health;
+        // Update health (format as whole number)
+        this.elements.healthValue.textContent = Math.floor(player.health);
         this.elements.healthBar.style.width = `${player.health}%`;
 
         // Add critical class if health < 20
@@ -51,8 +51,8 @@ class UIManager {
             healthBarParent.classList.remove('critical');
         }
 
-        // Update hunger
-        this.elements.hungerValue.textContent = player.hunger;
+        // Update hunger (format as whole number)
+        this.elements.hungerValue.textContent = Math.floor(player.hunger);
         this.elements.hungerBar.style.width = `${player.hunger}%`;
 
         // Add critical class if hunger < 20
@@ -298,5 +298,135 @@ class UIManager {
         this.updateTime();
         this.updateLocation();
         this.renderActionButtons();
+    }
+
+    // Start action animation
+    startActionAnimation(actionName, timeCost) {
+        // Action message text
+        const actionMessages = {
+            'work': 'Working...',
+            'food': 'Searching for food...',
+            'eat': 'Eating...',
+            'sleep': 'Sleeping...',
+            'rest': 'Resting...',
+            'steal': 'Stealing...',
+            'panhandle': 'Panhandling...'
+        };
+        const message = actionMessages[actionName] || 'Performing action...';
+
+        // Replace action buttons with progress UI
+        this.elements.actions.innerHTML = `
+            <div class="action-progress">
+                <div class="action-message" id="action-message">${message}</div>
+                <div class="action-progress-container">
+                    <div class="action-progress-bar" id="action-progress-bar"></div>
+                </div>
+                <div class="action-time-remaining" id="action-time-remaining">Starting...</div>
+            </div>
+        `;
+
+        // Update element references
+        this.elements.actionMessage = document.getElementById('action-message');
+        this.elements.actionProgressBar = document.getElementById('action-progress-bar');
+        this.elements.actionTimeRemaining = document.getElementById('action-time-remaining');
+    }
+
+    // Update action progress
+    updateActionProgress(progress, hoursRemaining) {
+        if (this.elements.actionProgressBar) {
+            this.elements.actionProgressBar.style.width = `${progress * 100}%`;
+        }
+        if (this.elements.actionTimeRemaining) {
+            this.elements.actionTimeRemaining.textContent = `${hoursRemaining.toFixed(1)}h remaining`;
+        }
+    }
+
+    // End action animation
+    endActionAnimation() {
+        // Restore action buttons
+        this.renderActionButtons();
+    }
+
+    // Animate time gradually
+    animateTime(startHour, endHour, durationMs, onProgress, onComplete) {
+        const startTime = performance.now();
+        const totalChange = endHour - startHour;
+
+        // Track which day boundaries we've crossed
+        let lastDayBoundary = Math.floor(startHour / 24);
+
+        const animate = (currentTime) => {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / durationMs, 1);
+
+            const currentHour = startHour + (totalChange * progress);
+            this.timeManager.setTime(currentHour);
+            this.updateTime();
+
+            // Check if we crossed midnight during this frame
+            const currentDayBoundary = Math.floor(currentHour / 24);
+            if (currentDayBoundary > lastDayBoundary) {
+                // We crossed one or more day boundaries
+                const daysCrossed = currentDayBoundary - lastDayBoundary;
+                for (let i = 0; i < daysCrossed; i++) {
+                    window.game.player.nextDay();
+                }
+                // Update day display immediately
+                this.elements.day.textContent = window.game.player.day;
+                lastDayBoundary = currentDayBoundary;
+            }
+
+            const hoursRemaining = endHour - currentHour;
+            onProgress(progress, hoursRemaining);
+
+            if (progress < 1) {
+                requestAnimationFrame(animate);
+            } else {
+                onComplete();
+            }
+        };
+
+        requestAnimationFrame(animate);
+    }
+
+    // Animate stats gradually (health/hunger animated, money instant)
+    animateStats(player, startStats, statChanges, durationMs, payAtEnd = false) {
+        const startTime = performance.now();
+
+        // INSTANT UPDATE: Apply money changes immediately (no animation)
+        if (!payAtEnd) {
+            player.money = Math.max(0, startStats.money + statChanges.money);
+            this.updateStats(player);  // Update display immediately
+        }
+
+        const animate = (currentTime) => {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / durationMs, 1);
+
+            // ANIMATED: Gradually update health and hunger only
+            const currentHealth = startStats.health + (statChanges.health * progress);
+            const currentHunger = startStats.hunger + (statChanges.hunger * progress);
+
+            player.health = Math.round(currentHealth);
+            player.hunger = Math.round(currentHunger);
+
+            // Clamp to valid ranges
+            player.health = Math.max(CONFIG.MIN_STAT, Math.min(CONFIG.MAX_HEALTH, player.health));
+            player.hunger = Math.max(CONFIG.MIN_STAT, Math.min(CONFIG.MAX_HUNGER, player.hunger));
+
+            this.updateStats(player);
+
+            // For payAtEnd: add money at the very end (instant, no animation)
+            if (payAtEnd && progress === 1) {
+                player.money = Math.max(0, startStats.money + statChanges.money);
+                this.updateStats(player);
+            }
+
+            if (progress < 1) {
+                requestAnimationFrame(animate);
+            }
+        };
+
+        requestAnimationFrame(animate);
     }
 }
