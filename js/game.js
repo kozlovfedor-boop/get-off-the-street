@@ -14,12 +14,14 @@ class Game {
 
     // Initialize the game
     init() {
+        // Ensure character animation is initialized
+        this.ui.characterAnimation.init();
         this.ui.updateAll(this.player);
         // Initial log is now added when user clicks "Start Game" button
     }
 
     // Perform an action
-    performAction(actionType) {
+    async performAction(actionType) {
         if (this.gameOver || this.victory || this.isAnimating) return;
 
         // Check if action is available
@@ -36,27 +38,83 @@ class Game {
         const result = action.execute();
 
         // Execute the action
-        this.executeAction(action, result);
+        await this.executeAction(action, result);
     }
 
     // Travel to a new location
-    travel(destinationId) {
-        if (this.gameOver || this.victory) return;
+    async travel(destinationId) {
+        if (this.gameOver || this.victory || this.isAnimating) return;
 
         const result = this.locationManager.travel(destinationId);
 
-        if (result.success) {
-            this.ui.addLog(`Traveled to ${result.destination}.`, 'neutral', this.player.day, this.timeManager.formatTime());
-
-            // Travel costs hunger
-            const hungerCost = Math.floor(Math.random() * 5) + 3;
-            this.player.modifyHunger(-hungerCost);
-            this.ui.addLog(`Hunger -${hungerCost}`, 'negative', this.player.day, this.timeManager.formatTime());
-
-            this.advanceTime(result.timeCost);
-        } else {
+        if (!result.success) {
             this.ui.addLog(result.message, 'negative', this.player.day, this.timeManager.formatTime());
+            return;
         }
+
+        // Set animating flag
+        this.isAnimating = true;
+
+        // Calculate total hunger cost for the journey
+        const totalHungerCost = Math.floor(Math.random() * 5) + 3;
+        const hungerPerHour = totalHungerCost / result.timeCost;
+
+        // Start traveling animation with direction
+        this.ui.startActionAnimation('traveling', result.timeCost, result.direction);
+
+        const perHourDuration = CONFIG.ANIMATION_SPEED;
+        const path = result.path;  // Array of location IDs to pass through
+
+        // Animate through each segment of the path
+        for (let i = 0; i < path.length - 1; i++) {
+            const fromLocation = path[i];
+            const toLocation = path[i + 1];
+
+            // Start background scroll animation for this segment
+            this.ui.startBackgroundScroll(result.direction, fromLocation, toLocation);
+
+            const startHour = this.timeManager.currentHour;
+            const endHour = startHour + 1;
+
+            // Calculate hunger for this segment
+            const hungerThisHour = -Math.round(hungerPerHour);
+
+            const targetStats = {
+                money: this.player.money,
+                health: this.player.health,
+                hunger: this.player.hunger + hungerThisHour
+            };
+
+            // Animate this hour/segment
+            await this.animateOneHour(startHour, endHour, perHourDuration, targetStats, false, result.timeCost, i);
+
+            // Stop background scroll
+            this.ui.stopBackgroundScroll();
+
+            // Clamp stats
+            this.player.health = Math.max(CONFIG.MIN_STAT, Math.min(CONFIG.MAX_HEALTH, this.player.health));
+            this.player.hunger = Math.max(CONFIG.MIN_STAT, Math.min(CONFIG.MAX_HUNGER, this.player.hunger));
+
+            // Log passing through intermediate locations
+            if (i < path.length - 2) {
+                this.ui.addLog(`Passing through ${this.locationManager.getLocation(toLocation).name}`, 'neutral', this.player.day, this.timeManager.formatTime());
+            }
+
+            // Check for game over during travel
+            const tickResults = this.executeHourTick(i, result.timeCost);
+            if (tickResults.gameOver) {
+                break;
+            }
+        }
+
+        // Travel complete - NOW update the location
+        this.locationManager.currentLocation = result.destinationId;
+        this.ui.addLog(`Arrived at ${result.destination}. Hunger -${totalHungerCost}`, 'neutral', this.player.day, this.timeManager.formatTime());
+
+        // Update UI (this will update background to new location)
+        this.ui.updateAll(this.player);
+        this.ui.endActionAnimation();
+        this.isAnimating = false;
     }
 
     // Execute action with time and stat updates (hour-by-hour execution)
@@ -80,7 +138,7 @@ class Game {
         };
 
         // Start UI animation for timed actions
-        this.ui.startActionAnimation(actionType, result.timeCost);
+        this.ui.startActionAnimation(result.type, result.timeCost);
 
         const totalHours = Math.ceil(result.timeCost);
         const perHourDuration = CONFIG.ANIMATION_SPEED;
@@ -131,28 +189,26 @@ class Game {
     }
 
     // Animate a single hour (returns promise that resolves when hour animation completes)
-    animateOneHour(startHour, endHour, durationMs, targetStats, deferMoney, totalHours, currentHour) {
-        return new Promise((resolve) => {
-            const currentStats = {
-                money: this.player.money,
-                health: this.player.health,
-                hunger: this.player.hunger
-            };
+    async animateOneHour(startHour, endHour, durationMs, targetStats, deferMoney, totalHours, currentHour) {
+        const currentStats = {
+            money: this.player.money,
+            health: this.player.health,
+            hunger: this.player.hunger
+        };
 
-            const statChanges = {
-                money: targetStats.money - currentStats.money,
-                health: targetStats.health - currentStats.health,
-                hunger: targetStats.hunger - currentStats.hunger
-            };
+        const statChanges = {
+            money: targetStats.money - currentStats.money,
+            health: targetStats.health - currentStats.health,
+            hunger: targetStats.hunger - currentStats.hunger
+        };
 
-            // Calculate progress for progress bar
-            const overallProgress = (currentHour + 1) / totalHours;
-            const hoursRemaining = totalHours - currentHour - 1;
+        // Calculate progress for progress bar
+        const overallProgress = (currentHour + 1) / totalHours;
+        const hoursRemaining = totalHours - currentHour - 1;
 
-            // Animate stats for this hour
-            this.ui.animateStats(this.player, currentStats, statChanges, durationMs, deferMoney);
-
-            // Animate time for this hour
+        // Animate both stats and time in parallel, wait for both to complete
+        await Promise.all([
+            this.ui.animateStats(this.player, currentStats, statChanges, durationMs, deferMoney),
             this.ui.animateTime(startHour, endHour, durationMs,
                 (progress, hourProgress) => {
                     // Update progress bar with overall action progress
@@ -162,10 +218,9 @@ class Game {
                 },
                 () => {
                     // Hour complete
-                    resolve();
                 }
-            );
-        });
+            )
+        ]);
     }
 
     // Execute game logic for each simulated hour during action
@@ -278,6 +333,7 @@ class Game {
         this.locationManager.currentLocation = CONFIG.INITIAL_LOCATION;
         this.gameOver = false;
         this.victory = false;
+        this.isAnimating = false;
 
         this.ui.reset();
         this.ui.updateAll(this.player);

@@ -1,0 +1,258 @@
+/* Character Animation Styles */
+
+/* Character section container (above location info) */
+.character-section {
+    background: #1a1a1a;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border: 2px solid #333;
+    display: flex;
+    justify-content: center;
+}
+
+/* Character display area */
+.character-display {
+    width: 467px;  /* 1400px ÷ 3 (scaled down 3x, maintains proportions) */
+    height: 200px;  /* 600px ÷ 3 */
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    border-radius: 5px;
+    overflow: hidden;
+    position: relative;
+    /* No transition - instant background changes for seamless scrolling */
+}
+
+/* Location-specific backgrounds */
+.character-display[data-location="park"] {
+    background-image: url('../assets/background/bg-city-park.png');
+    background-size: 467px 200px;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.character-display[data-location="london-city"] {
+    background-image: url('../assets/background/bg-london-city.png');
+    background-size: 467px 200px;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.character-display[data-location="camden-town"] {
+    background-image: url('../assets/background/bg-camden-town.png');
+    background-size: 467px 200px;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.character-display[data-location="shelter"] {
+    background-image: url('../assets/background/bg-homeless-shelter.png');
+    background-size: 467px 200px;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+/* === DUAL-LAYER BACKGROUND SYSTEM === */
+
+/* Pseudo-element for origin background (scrolls out) */
+.character-display::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: 467px 200px;
+    background-repeat: no-repeat;
+    background-position: center;
+    z-index: 1;
+    pointer-events: none;
+}
+
+/* Character sprite must be above both backgrounds */
+.character-sprite {
+    position: relative;
+    z-index: 10;
+    transform: scale(1.5);  /* Scale visual output 1.5x without affecting sprite sheet parsing */
+}
+
+/* === BACKGROUND SCROLLING ANIMATIONS === */
+
+/* Old background scrolls out to the left (exits screen left) */
+@keyframes scroll-out-left {
+    0% {
+        background-position: center;
+    }
+    100% {
+        background-position: -467px center;
+    }
+}
+
+/* New background scrolls in from the right (enters from right) */
+@keyframes scroll-in-from-right {
+    0% {
+        background-position: 467px center;
+    }
+    100% {
+        background-position: center;
+    }
+}
+
+/* Old background scrolls out to the right (exits screen right) */
+@keyframes scroll-out-right {
+    0% {
+        background-position: center;
+    }
+    100% {
+        background-position: 467px center;
+    }
+}
+
+/* New background scrolls in from the left (enters from left) */
+@keyframes scroll-in-from-left {
+    0% {
+        background-position: -467px center;
+    }
+    100% {
+        background-position: center;
+    }
+}
+
+/* Traveling RIGHT: old scrolls left (out), new scrolls left (in) */
+.character-display.traveling-right::before {
+    animation: scroll-out-left 1s linear forwards;
+}
+
+.character-display.traveling-right {
+    animation: scroll-in-from-right 1s linear forwards;
+}
+
+/* Traveling LEFT: old scrolls right (out), new scrolls right (in) */
+.character-display.traveling-left::before {
+    animation: scroll-out-right 1s linear forwards;
+}
+
+.character-display.traveling-left {
+    animation: scroll-in-from-left 1s linear forwards;
+}
+
+/* Transition states - destination backgrounds */
+.character-display[data-location="shelter-to-park"] {
+    background-image: url('../assets/background/bg-city-park.png');
+    background-size: 467px 200px;
+    background-repeat: no-repeat;
+}
+
+.character-display[data-location="park-to-shelter"] {
+    background-image: url('../assets/background/bg-homeless-shelter.png');
+    background-size: 467px 200px;
+    background-repeat: no-repeat;
+}
+
+.character-display[data-location="park-to-camden-town"] {
+    background-image: url('../assets/background/bg-camden-town.png');
+    background-size: 467px 200px;
+    background-repeat: no-repeat;
+}
+
+.character-display[data-location="camden-town-to-park"] {
+    background-image: url('../assets/background/bg-city-park.png');
+    background-size: 467px 200px;
+    background-repeat: no-repeat;
+}
+
+.character-display[data-location="camden-town-to-london-city"] {
+    background-image: url('../assets/background/bg-london-city.png');
+    background-size: 467px 200px;
+    background-repeat: no-repeat;
+}
+
+.character-display[data-location="london-city-to-camden-town"] {
+    background-image: url('../assets/background/bg-camden-town.png');
+    background-size: 467px 200px;
+    background-repeat: no-repeat;
+}
+
+/* Origin backgrounds for ::before pseudo-element */
+.character-display[data-location="shelter-to-park"]::before {
+    background-image: url('../assets/background/bg-homeless-shelter.png');
+}
+
+.character-display[data-location="park-to-shelter"]::before {
+    background-image: url('../assets/background/bg-city-park.png');
+}
+
+.character-display[data-location="park-to-camden-town"]::before {
+    background-image: url('../assets/background/bg-city-park.png');
+}
+
+.character-display[data-location="camden-town-to-park"]::before {
+    background-image: url('../assets/background/bg-camden-town.png');
+}
+
+.character-display[data-location="camden-town-to-london-city"]::before {
+    background-image: url('../assets/background/bg-camden-town.png');
+}
+
+.character-display[data-location="london-city-to-camden-town"]::before {
+    background-image: url('../assets/background/bg-london-city.png');
+}
+
+/* Character sprite element */
+.character-sprite {
+    width: 108px;  /* 128px - 20px (10px cropped from each side) */
+    height: 108px;
+    background-image: url('../assets/character/homeless-character.png');
+    background-size: 1024px 512px; /* 512px × 2 scale, 256px × 2 scale (8 frames × 4 rows) */
+    overflow: hidden;
+    margin: -10px;  /* Crop 10px from each edge */
+    image-rendering: pixelated; /* Chrome/Edge */
+    image-rendering: -moz-crisp-edges; /* Firefox */
+    image-rendering: crisp-edges; /* Safari */
+    -ms-interpolation-mode: nearest-neighbor; /* IE */
+}
+
+/* === ANIMATION KEYFRAMES === */
+/* Each animation: 8 frames, 32x32 each, scaled 4x = 128x128 */
+
+/* Row 0: Idle (8 frames) */
+@keyframes sprite-idle {
+    0% { background-position: 0px 0px; }
+    100% { background-position: -1024px 0px; }
+}
+
+/* Row 1: Walk Right (8 frames) */
+@keyframes sprite-walk-right {
+    0% { background-position: 0px -128px; }
+    100% { background-position: -1024px -128px; }
+}
+
+/* Row 2: Walk Left (8 frames) */
+@keyframes sprite-walk-left {
+    0% { background-position: 0px -256px; }
+    100% { background-position: -1024px -256px; }
+}
+
+/* === ANIMATION CLASSES === */
+/* Apply these classes to trigger animations */
+
+/* Idle state (default) - animated 8-frame loop */
+.character-sprite.idle {
+    animation: sprite-idle 1.6s steps(8) infinite;
+}
+
+/* Walk Right - animated 8-frame loop */
+.character-sprite.walk-right {
+    animation: sprite-walk-right 0.8s steps(8) infinite;
+}
+
+/* Walk Left - animated 8-frame loop */
+.character-sprite.walk-left {
+    animation: sprite-walk-left 0.8s steps(8) infinite;
+}
+
+/* Smooth transitions between animation states */
+.character-sprite {
+    transition: opacity 0.2s ease;
+}

@@ -4,6 +4,9 @@ class LocationManager {
         this.timeManager = timeManager;
         this.currentLocation = 'park'; // Start at park
 
+        // Linear location order for sequential travel
+        this.locationOrder = ['shelter', 'park', 'camden-town', 'london-city'];
+
         // Define all locations
         this.locations = {
             'london-city': {
@@ -12,9 +15,7 @@ class LocationManager {
                 description: 'The wealthy business district. High pay, high risk.',
                 actions: ['work', 'panhandle', 'steal', 'rest'],
                 travelTime: {
-                    'camden-town': 1,
-                    'shelter': 0.5,
-                    'park': 1
+                    'camden-town': 1  // Only adjacent: Camden Town
                 }
             },
             'camden-town': {
@@ -23,9 +24,8 @@ class LocationManager {
                 description: 'Industrial area with factories and warehouses.',
                 actions: ['work', 'panhandle', 'steal', 'rest'],
                 travelTime: {
-                    'london-city': 1,
-                    'shelter': 0.5,
-                    'park': 0.5
+                    'park': 1,           // Adjacent: Park
+                    'london-city': 1     // Adjacent: London City
                 }
             },
             'shelter': {
@@ -34,9 +34,7 @@ class LocationManager {
                 description: 'Safe place to sleep and eat. Open 6pm-8am.',
                 actions: ['sleep', 'eat'],
                 travelTime: {
-                    'london-city': 0.5,
-                    'camden-town': 0.5,
-                    'park': 0.5
+                    'park': 1  // Only adjacent: Park
                 }
             },
             'park': {
@@ -45,9 +43,8 @@ class LocationManager {
                 description: 'Public park. Free but risky at night.',
                 actions: ['sleep', 'panhandle', 'food'],
                 travelTime: {
-                    'london-city': 1,
-                    'camden-town': 0.5,
-                    'shelter': 0.5
+                    'shelter': 1,        // Adjacent: Shelter
+                    'camden-town': 1     // Adjacent: Camden Town
                 }
             }
         };
@@ -77,20 +74,59 @@ class LocationManager {
         }));
     }
 
-    // Travel to a new location
-    travel(destinationId) {
-        const current = this.getCurrentLocation();
-        const travelTime = current.travelTime[destinationId];
+    // Calculate path and total time between two locations
+    calculatePath(fromId, toId) {
+        const fromIndex = this.locationOrder.indexOf(fromId);
+        const toIndex = this.locationOrder.indexOf(toId);
 
-        if (travelTime === undefined) {
-            return { success: false, message: "Can't travel there from here" };
+        if (fromIndex === -1 || toIndex === -1) {
+            return null;
         }
 
-        this.currentLocation = destinationId;
+        if (fromIndex === toIndex) {
+            return { path: [fromId], totalTime: 0, hops: 0 };
+        }
+
+        const path = [];
+        const distance = Math.abs(toIndex - fromIndex);
+
+        if (toIndex > fromIndex) {
+            // Travel forward (right)
+            for (let i = fromIndex; i <= toIndex; i++) {
+                path.push(this.locationOrder[i]);
+            }
+        } else {
+            // Travel backward (left)
+            for (let i = fromIndex; i >= toIndex; i--) {
+                path.push(this.locationOrder[i]);
+            }
+        }
+
+        return {
+            path: path,           // Array of location IDs to pass through
+            totalTime: distance,  // 1 hour per hop
+            hops: distance,       // Number of location changes
+            direction: toIndex > fromIndex ? 'right' : 'left'  // Travel direction
+        };
+    }
+
+    // Travel to a new location
+    travel(destinationId) {
+        const pathInfo = this.calculatePath(this.currentLocation, destinationId);
+
+        if (!pathInfo || pathInfo.totalTime === 0) {
+            return { success: false, message: "Can't travel there" };
+        }
+
+        // Don't update location here - let game.js update it after animation completes
         return {
             success: true,
-            timeCost: travelTime,
-            destination: this.locations[destinationId].name
+            timeCost: pathInfo.totalTime,
+            destination: this.locations[destinationId].name,
+            destinationId: destinationId,
+            path: pathInfo.path,              // Array of locations to pass through
+            direction: pathInfo.direction,    // 'left' or 'right'
+            hops: pathInfo.hops               // Number of location changes
         };
     }
 

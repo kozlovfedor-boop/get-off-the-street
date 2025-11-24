@@ -3,6 +3,7 @@ class UIManager {
     constructor(locationManager, timeManager) {
         this.locationManager = locationManager;
         this.timeManager = timeManager;
+        this.characterAnimation = new CharacterAnimationManager(locationManager);
 
         this.elements = {
             money: document.getElementById('money'),
@@ -15,6 +16,8 @@ class UIManager {
             timePeriod: document.getElementById('time-period'),
             location: document.getElementById('location'),
             locationDesc: document.getElementById('location-desc'),
+            travelButtonContainer: document.getElementById('travel-button-container'),
+            locationDestinations: document.getElementById('location-destinations'),
             story: document.getElementById('story'),
             gameStatus: document.getElementById('game-status'),
             actions: document.getElementById('actions'),
@@ -32,6 +35,9 @@ class UIManager {
 
         // Show intro text on initial load
         this.showIntro();
+
+        // Initialize character animation immediately (DOM is already ready)
+        this.characterAnimation.init();
     }
 
     // Update all stat displays
@@ -78,6 +84,11 @@ class UIManager {
         const location = this.locationManager.getCurrentLocation();
         this.elements.location.textContent = location.name;
         this.elements.locationDesc.textContent = location.description;
+        this.renderLocationTravel();
+        this.hideTravelMenu(); // Close travel menu when location changes
+
+        // Update character animation location background
+        this.characterAnimation.updateLocation();
     }
 
     // Render action buttons based on current location and time
@@ -94,15 +105,39 @@ class UIManager {
             this.elements.actions.appendChild(button);
         });
 
-        // Always add travel button
-        const travelButton = document.createElement('button');
-        travelButton.className = 'travel';
-        travelButton.textContent = 'Travel';
-        travelButton.onclick = () => this.showTravelMenu();
-        this.elements.actions.appendChild(travelButton);
+        // Show actions container
+        this.elements.actions.classList.remove('hidden');
     }
 
-    // Create action button
+    // Get action class for preview
+    getActionClass(actionType) {
+        const actionClassMap = {
+            'work': WorkAction,
+            'panhandle': PanhandleAction,
+            'food': FindFoodAction,
+            'sleep': SleepAction,
+            'rest': SleepAction,
+            'steal': StealAction,
+            'eat': EatAction
+        };
+        return actionClassMap[actionType];
+    }
+
+    // Format stat change for display
+    formatStatChange(stat, range, isPositive) {
+        const [min, max] = range;
+        if (min === 0 && max === 0) return null;
+
+        const sign = isPositive ? '+' : '';
+        const prefix = stat === 'money' ? '£' : '';
+
+        if (min === max) {
+            return `${sign}${prefix}${min}`;
+        }
+        return `${sign}${prefix}${min} to ${sign}${prefix}${max}`;
+    }
+
+    // Create action button with time and effects
     createActionButton(action, availability) {
         const button = document.createElement('button');
         button.className = action;
@@ -118,50 +153,183 @@ class UIManager {
             'panhandle': 'Panhandle',
             'eat': 'Eat Meal'
         };
-        button.textContent = actionNames[action] || action;
+        const actionName = actionNames[action] || action;
+
+        // Get preview data from action class
+        const ActionClass = this.getActionClass(action);
+        const preview = ActionClass ? ActionClass.getPreview() : null;
+
+        if (preview) {
+            // Create two-line button structure
+            const topLine = document.createElement('div');
+            topLine.className = 'action-top-line';
+
+            const nameSpan = document.createElement('span');
+            nameSpan.className = 'action-name';
+            nameSpan.textContent = actionName;
+
+            const timeSpan = document.createElement('span');
+            timeSpan.className = 'action-time';
+            timeSpan.textContent = preview.timeCost === 0 ? '⏱️ instant' : `⏱️ ${preview.timeCost}h`;
+
+            topLine.appendChild(nameSpan);
+            topLine.appendChild(timeSpan);
+
+            // Create effects line
+            const effectsLine = document.createElement('div');
+            effectsLine.className = 'action-effects';
+
+            const effects = [];
+
+            // Money effect
+            const moneyText = this.formatStatChange('money', preview.effects.money, preview.effects.money[0] >= 0);
+            if (moneyText) {
+                effects.push(`💰 ${moneyText}`);
+            }
+
+            // Health effect
+            const healthText = this.formatStatChange('health', preview.effects.health, preview.effects.health[0] >= 0);
+            if (healthText) {
+                effects.push(`❤️ ${healthText}`);
+            }
+
+            // Hunger effect
+            const hungerText = this.formatStatChange('hunger', preview.effects.hunger, preview.effects.hunger[0] >= 0);
+            if (hungerText) {
+                effects.push(`🍔 ${hungerText}`);
+            }
+
+            effectsLine.textContent = effects.join('  ');
+
+            button.appendChild(topLine);
+            button.appendChild(effectsLine);
+        } else {
+            // Fallback for buttons without preview
+            button.textContent = actionName;
+        }
 
         // Disable if not available
         if (!availability.available) {
             button.disabled = true;
             button.title = availability.reason;
         } else {
+            // Add tooltip with notes if any
+            if (preview && preview.notes) {
+                button.title = preview.notes;
+            }
             button.onclick = () => window.game.performAction(action);
         }
 
         return button;
     }
 
-    // Show travel menu
-    showTravelMenu() {
-        const destinations = this.locationManager.getAvailableDestinations();
-        const currentLocation = this.locationManager.getCurrentLocation();
+    // Render travel button in location area
+    renderLocationTravel() {
+        // Create travel button
+        this.elements.travelButtonContainer.innerHTML = '';
+        const travelButton = document.createElement('button');
+        // Toggle button text based on travelMode state
+        travelButton.textContent = this.travelMode ? 'Cancel' : 'Travel';
+        travelButton.onclick = () => this.toggleTravelMenu();
+        this.elements.travelButtonContainer.appendChild(travelButton);
+    }
 
-        this.elements.actions.innerHTML = '<div class="travel-menu"></div>';
-        const menu = this.elements.actions.querySelector('.travel-menu');
+    // Toggle travel destinations menu
+    toggleTravelMenu() {
+        const isHidden = this.elements.locationDestinations.classList.contains('hidden');
+
+        if (isHidden) {
+            this.showTravelMenu();
+        } else {
+            this.hideTravelMenu();
+        }
+    }
+
+    // Show travel menu in location area
+    showTravelMenu() {
+        const currentId = this.locationManager.currentLocation;
+        const allLocations = this.locationManager.getAllLocations();
+
+        // Clear and populate destinations
+        this.elements.locationDestinations.innerHTML = '';
 
         const title = document.createElement('h3');
         title.textContent = 'Travel to:';
-        title.style.marginBottom = '10px';
-        menu.appendChild(title);
+        this.elements.locationDestinations.appendChild(title);
 
-        destinations.forEach(dest => {
+        allLocations.forEach(dest => {
+            if (dest.id === currentId) return; // Skip current location
+
+            // Calculate path and time
+            const pathInfo = this.locationManager.calculatePath(currentId, dest.id);
+            if (!pathInfo) return;
+
             const button = document.createElement('button');
-            button.className = 'travel-dest';
-            button.innerHTML = `
-                <strong>${dest.name}</strong><br>
-                <small>${dest.description}</small><br>
-                <small>Travel time: ${dest.travelTime}h</small>
-            `;
-            button.onclick = () => window.game.travel(dest.id);
-            menu.appendChild(button);
+            button.className = 'destination-button';
+
+            // Create two-line structure like action buttons
+            const topLine = document.createElement('div');
+            topLine.className = 'destination-top-line';
+
+            const nameSpan = document.createElement('span');
+            nameSpan.className = 'destination-name';
+            nameSpan.textContent = dest.name;
+
+            const timeSpan = document.createElement('span');
+            timeSpan.className = 'destination-time';
+            timeSpan.textContent = `⏱️ ${pathInfo.totalTime}h`;
+
+            topLine.appendChild(nameSpan);
+            topLine.appendChild(timeSpan);
+
+            // Create description line
+            const descLine = document.createElement('div');
+            descLine.className = 'destination-desc';
+
+            // Show path if multi-hop
+            if (pathInfo.hops > 1) {
+                const pathNames = pathInfo.path
+                    .slice(1, -1) // Exclude start and end
+                    .map(id => this.locationManager.getLocation(id).name);
+                descLine.textContent = `Via: ${pathNames.join(' → ')}`;
+            } else {
+                descLine.textContent = dest.description;
+            }
+
+            button.appendChild(topLine);
+            button.appendChild(descLine);
+
+            button.onclick = () => {
+                window.game.travel(dest.id);
+                this.hideTravelMenu();
+            };
+            this.elements.locationDestinations.appendChild(button);
         });
 
         // Cancel button
         const cancelButton = document.createElement('button');
         cancelButton.className = 'cancel';
         cancelButton.textContent = 'Cancel';
-        cancelButton.onclick = () => this.renderActionButtons();
-        menu.appendChild(cancelButton);
+        cancelButton.onclick = () => this.hideTravelMenu();
+        this.elements.locationDestinations.appendChild(cancelButton);
+
+        // Show destinations and hide actions
+        this.elements.locationDestinations.classList.remove('hidden');
+        this.elements.actions.classList.add('hidden');
+
+        // Update travel mode and button text
+        this.travelMode = true;
+        this.renderLocationTravel();
+    }
+
+    // Hide travel menu
+    hideTravelMenu() {
+        this.elements.locationDestinations.classList.add('hidden');
+        this.elements.actions.classList.remove('hidden');
+
+        // Update travel mode and button text
+        this.travelMode = false;
+        this.renderLocationTravel();
     }
 
     // Add entry to game log
@@ -301,7 +469,7 @@ class UIManager {
     }
 
     // Start action animation
-    startActionAnimation(actionName, timeCost) {
+    startActionAnimation(actionName, timeCost, direction = null) {
         // Action message text
         const actionMessages = {
             'work': 'Working...',
@@ -310,7 +478,8 @@ class UIManager {
             'sleep': 'Sleeping...',
             'rest': 'Resting...',
             'steal': 'Stealing...',
-            'panhandle': 'Panhandling...'
+            'panhandle': 'Panhandling...',
+            'traveling': 'Traveling...'
         };
         const message = actionMessages[actionName] || 'Performing action...';
 
@@ -329,6 +498,9 @@ class UIManager {
         this.elements.actionMessage = document.getElementById('action-message');
         this.elements.actionProgressBar = document.getElementById('action-progress-bar');
         this.elements.actionTimeRemaining = document.getElementById('action-time-remaining');
+
+        // Start character animation with direction
+        this.characterAnimation.setAnimation(actionName, direction);
     }
 
     // Update action progress
@@ -345,88 +517,145 @@ class UIManager {
     endActionAnimation() {
         // Restore action buttons
         this.renderActionButtons();
+
+        // Return character to idle state
+        this.characterAnimation.setIdle();
+    }
+
+    // Start background scrolling animation for travel
+    startBackgroundScroll(direction, fromLocation, toLocation) {
+        // Ensure animation manager is initialized
+        if (!this.characterAnimation.display) {
+            console.warn('Character animation not initialized, calling init()');
+            this.characterAnimation.init();
+        }
+
+        if (!this.characterAnimation.display) {
+            console.error('Character display element not found');
+            return;
+        }
+
+        const display = this.characterAnimation.display;
+
+        // Set transition state
+        display.setAttribute('data-location', `${fromLocation}-to-${toLocation}`);
+
+        // Force reflow to ensure CSS recognizes the attribute change
+        void display.offsetHeight;
+
+        // Use requestAnimationFrame to ensure animation classes are applied after reflow
+        requestAnimationFrame(() => {
+            display.classList.add('transitioning');
+
+            // Add scroll animation class based on direction
+            if (direction === 'right') {
+                display.classList.add('traveling-right');
+            } else {
+                display.classList.add('traveling-left');
+            }
+
+            // Set character sprite animation to match direction
+            this.characterAnimation.setAnimation('traveling', direction);
+        });
+    }
+
+    // Stop background scrolling
+    stopBackgroundScroll() {
+        if (!this.characterAnimation.display) return;
+
+        const display = this.characterAnimation.display;
+        display.classList.remove('traveling-right', 'traveling-left', 'transitioning');
+        display.removeAttribute('data-location');  // Clear the data-location to reset state
+        void display.offsetHeight;  // Force browser reflow to allow CSS animations to reset
     }
 
     // Animate time gradually
     animateTime(startHour, endHour, durationMs, onProgress, onComplete) {
-        const startTime = performance.now();
-        const totalChange = endHour - startHour;
+        return new Promise((resolve) => {
+            const startTime = performance.now();
+            const totalChange = endHour - startHour;
 
-        // Track which day boundaries we've crossed
-        let lastDayBoundary = Math.floor(startHour / 24);
+            // Track which day boundaries we've crossed
+            let lastDayBoundary = Math.floor(startHour / 24);
 
-        const animate = (currentTime) => {
-            const elapsed = currentTime - startTime;
-            const progress = Math.min(elapsed / durationMs, 1);
+            const animate = (currentTime) => {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / durationMs, 1);
 
-            const currentHour = startHour + (totalChange * progress);
-            this.timeManager.setTime(currentHour);
-            this.updateTime();
+                const currentHour = startHour + (totalChange * progress);
+                this.timeManager.setTime(currentHour);
+                this.updateTime();
 
-            // Check if we crossed midnight during this frame
-            const currentDayBoundary = Math.floor(currentHour / 24);
-            if (currentDayBoundary > lastDayBoundary) {
-                // We crossed one or more day boundaries
-                const daysCrossed = currentDayBoundary - lastDayBoundary;
-                for (let i = 0; i < daysCrossed; i++) {
-                    window.game.player.nextDay();
+                // Check if we crossed midnight during this frame
+                const currentDayBoundary = Math.floor(currentHour / 24);
+                if (currentDayBoundary > lastDayBoundary) {
+                    // We crossed one or more day boundaries
+                    const daysCrossed = currentDayBoundary - lastDayBoundary;
+                    for (let i = 0; i < daysCrossed; i++) {
+                        window.game.player.nextDay();
+                    }
+                    // Update day display immediately
+                    this.elements.day.textContent = window.game.player.day;
+                    lastDayBoundary = currentDayBoundary;
                 }
-                // Update day display immediately
-                this.elements.day.textContent = window.game.player.day;
-                lastDayBoundary = currentDayBoundary;
-            }
 
-            const hoursRemaining = endHour - currentHour;
-            onProgress(progress, hoursRemaining);
+                const hoursRemaining = endHour - currentHour;
+                onProgress(progress, hoursRemaining);
 
-            if (progress < 1) {
-                requestAnimationFrame(animate);
-            } else {
-                onComplete();
-            }
-        };
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    onComplete();
+                    resolve();
+                }
+            };
 
-        requestAnimationFrame(animate);
+            requestAnimationFrame(animate);
+        });
     }
 
     // Animate stats gradually (health/hunger animated, money instant)
     animateStats(player, startStats, statChanges, durationMs, payAtEnd = false) {
-        const startTime = performance.now();
+        return new Promise((resolve) => {
+            const startTime = performance.now();
 
-        // INSTANT UPDATE: Apply money changes immediately (no animation)
-        if (!payAtEnd) {
-            player.money = Math.max(0, startStats.money + statChanges.money);
-            this.updateStats(player);  // Update display immediately
-        }
-
-        const animate = (currentTime) => {
-            const elapsed = currentTime - startTime;
-            const progress = Math.min(elapsed / durationMs, 1);
-
-            // ANIMATED: Gradually update health and hunger only
-            const currentHealth = startStats.health + (statChanges.health * progress);
-            const currentHunger = startStats.hunger + (statChanges.hunger * progress);
-
-            player.health = Math.round(currentHealth);
-            player.hunger = Math.round(currentHunger);
-
-            // Clamp to valid ranges
-            player.health = Math.max(CONFIG.MIN_STAT, Math.min(CONFIG.MAX_HEALTH, player.health));
-            player.hunger = Math.max(CONFIG.MIN_STAT, Math.min(CONFIG.MAX_HUNGER, player.hunger));
-
-            this.updateStats(player);
-
-            // For payAtEnd: add money at the very end (instant, no animation)
-            if (payAtEnd && progress === 1) {
+            // INSTANT UPDATE: Apply money changes immediately (no animation)
+            if (!payAtEnd) {
                 player.money = Math.max(0, startStats.money + statChanges.money);
+                this.updateStats(player);  // Update display immediately
+            }
+
+            const animate = (currentTime) => {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / durationMs, 1);
+
+                // ANIMATED: Gradually update health and hunger only
+                const currentHealth = startStats.health + (statChanges.health * progress);
+                const currentHunger = startStats.hunger + (statChanges.hunger * progress);
+
+                player.health = Math.round(currentHealth);
+                player.hunger = Math.round(currentHunger);
+
+                // Clamp to valid ranges
+                player.health = Math.max(CONFIG.MIN_STAT, Math.min(CONFIG.MAX_HEALTH, player.health));
+                player.hunger = Math.max(CONFIG.MIN_STAT, Math.min(CONFIG.MAX_HUNGER, player.hunger));
+
                 this.updateStats(player);
-            }
 
-            if (progress < 1) {
-                requestAnimationFrame(animate);
-            }
-        };
+                // For payAtEnd: add money at the very end (instant, no animation)
+                if (payAtEnd && progress === 1) {
+                    player.money = Math.max(0, startStats.money + statChanges.money);
+                    this.updateStats(player);
+                }
 
-        requestAnimationFrame(animate);
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    resolve();
+                }
+            };
+
+            requestAnimationFrame(animate);
+        });
     }
 }

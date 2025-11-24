@@ -46,4 +46,16 @@ class PanhandleAction extends BaseAction {
             logType: 'positive'
         };
     }
+
+    static getPreview() {
+        return {
+            timeCost: CONFIG.TIME_COSTS.PANHANDLE,
+            effects: {
+                money: [5, 35],
+                health: [0, 0],
+                hunger: [-10, -5]
+            },
+            notes: "varies by location"
+        };
+    }
 }

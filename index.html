@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Get off the Street</title>
     <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/character.css">
 </head>
 <body>
     <div class="container">
@@ -52,12 +53,29 @@
 
                 <!-- Center Column: Game Area -->
                 <div class="game-column">
+                    <!-- Character Display (above location) -->
+                    <div class="character-section">
+                        <div class="character-display" id="character-display" data-location="park">
+                            <div class="character-sprite idle" id="character-sprite"></div>
+                        </div>
+                    </div>
+
                     <div class="location-info">
-                        <div class="location-name">
-                            <span class="label">Location:</span>
-                            <span class="value" id="location">City Park</span>
+                        <div class="location-header">
+                            <div class="location-name-group">
+                                <div class="location-name">
+                                    <span class="label">Location:</span>
+                                    <span class="value" id="location">City Park</span>
+                                </div>
+                            </div>
+                            <div class="travel-button-container" id="travel-button-container">
+                                <!-- Travel button will be rendered here by ui.js -->
+                            </div>
                         </div>
                         <div class="location-description" id="location-desc">Public park. Free but risky at night.</div>
+                        <div class="location-destinations hidden" id="location-destinations">
+                            <!-- Travel destinations will be rendered here by ui.js -->
+                        </div>
                     </div>
 
                     <div class="game-area">
@@ -102,6 +120,7 @@
     <script src="js/actions/steal-action.js"></script>
     <script src="js/actions/eat-action.js"></script>
     <script src="js/actions/action-factory.js"></script>
+    <script src="js/character-animation.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/game.js"></script>
 </body>

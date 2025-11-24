@@ -62,4 +62,16 @@ class StealAction extends BaseAction {
             logType: this.savedResult.logType
         };
     }
+
+    static getPreview() {
+        return {
+            timeCost: CONFIG.TIME_COSTS.STEAL,
+            effects: {
+                money: [-50, 100], // Caught fine or successful steal
+                health: [-25, 0],  // Caught by police or someone
+                hunger: [-15, -5]
+            },
+            notes: "risky"
+        };
+    }
 }

@@ -49,4 +49,18 @@ class BaseAction {
     random(min, max) {
         return Math.floor(Math.random() * (max - min + 1)) + min;
     }
+
+    // Static method to get preview info for UI
+    // Override in subclasses to provide specific ranges
+    static getPreview() {
+        return {
+            timeCost: 0,
+            effects: {
+                money: [0, 0],
+                health: [0, 0],
+                hunger: [0, 0]
+            },
+            notes: null // Optional: "varies by location", "if successful", etc.
+        };
+    }
 }

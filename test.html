@@ -248,11 +248,21 @@
 
                     <div class="game-column">
                         <div class="location-info">
-                            <div class="location-name">
-                                <span class="label">Location:</span>
-                                <span class="value" id="location">City Park</span>
+                            <div class="location-header">
+                                <div class="location-name-group">
+                                    <div class="location-name">
+                                        <span class="label">Location:</span>
+                                        <span class="value" id="location">City Park</span>
+                                    </div>
+                                </div>
+                                <div class="travel-button-container" id="travel-button-container">
+                                    <!-- Travel button will be rendered here by ui.js -->
+                                </div>
                             </div>
                             <div class="location-description" id="location-desc">Public park.</div>
+                            <div class="location-destinations hidden" id="location-destinations">
+                                <!-- Travel destinations will be rendered here by ui.js -->
+                            </div>
                         </div>
 
                         <div class="game-area">
@@ -282,7 +292,18 @@
     <script src="js/time.js"></script>
     <script src="js/locations.js"></script>
     <script src="js/events.js"></script>
-    <script src="js/actions.js"></script>
+
+    <!-- Load action system -->
+    <script src="js/actions/base-action.js"></script>
+    <script src="js/actions/action-utils.js"></script>
+    <script src="js/actions/work-action.js"></script>
+    <script src="js/actions/find-food-action.js"></script>
+    <script src="js/actions/eat-action.js"></script>
+    <script src="js/actions/sleep-action.js"></script>
+    <script src="js/actions/panhandle-action.js"></script>
+    <script src="js/actions/steal-action.js"></script>
+    <script src="js/actions/action-factory.js"></script>
+
     <script src="js/ui.js"></script>
     <script src="js/game.js"></script>
 

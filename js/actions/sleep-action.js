@@ -78,4 +78,18 @@ class SleepAction extends BaseAction {
             logType: 'neutral'
         };
     }
+
+    static getPreview() {
+        // Note: This shows shelter sleep stats as baseline
+        // UI will need to show location-specific info
+        return {
+            timeCost: CONFIG.TIME_COSTS.SLEEP, // 7 hours for shelter/park, 2 for rest
+            effects: {
+                money: [-30, 0], // Possible robbery at park
+                health: [10, 50], // Range from rest (10-20) to shelter (30-50)
+                hunger: [-20, -5]
+            },
+            notes: "varies by location"
+        };
+    }
 }

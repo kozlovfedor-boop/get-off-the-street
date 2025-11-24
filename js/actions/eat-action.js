@@ -21,6 +21,18 @@ class EatAction extends BaseAction {
         return true;
     }
 
+    static getPreview() {
+        return {
+            timeCost: 0, // Instant
+            effects: {
+                money: [0, 0],
+                health: [0, 0],
+                hunger: [40, 60]
+            },
+            notes: null
+        };
+    }
+
     // No need to override calculatePerHourStats() - won't be called for instant actions
     // No need to override generateLogMessage() - won't be called for instant actions
 }

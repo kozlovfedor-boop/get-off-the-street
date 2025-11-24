@@ -31,4 +31,16 @@ class FindFoodAction extends BaseAction {
             logType: 'positive'
         };
     }
+
+    static getPreview() {
+        return {
+            timeCost: CONFIG.TIME_COSTS.FOOD,
+            effects: {
+                money: [0, 0],
+                health: [0, 0],
+                hunger: [20, 45]
+            },
+            notes: null
+        };
+    }
 }

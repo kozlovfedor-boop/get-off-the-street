@@ -62,4 +62,16 @@ class WorkAction extends BaseAction {
             logType: 'positive'
         };
     }
+
+    static getPreview() {
+        return {
+            timeCost: CONFIG.TIME_COSTS.WORK,
+            effects: {
+                money: [20, 40],
+                health: [0, 0],
+                hunger: [-25, -10]
+            },
+            notes: "varies by location"
+        };
+    }
 }

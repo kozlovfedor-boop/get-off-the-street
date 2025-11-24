@@ -246,9 +246,20 @@ h1 {
     border-bottom: 2px solid #444;
 }
 
+.location-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 15px;
+    margin-bottom: 10px;
+}
+
+.location-name-group {
+    flex: 1;
+}
+
 .location-name {
     font-size: 1.1em;
-    margin-bottom: 5px;
 }
 
 .location-name .label {
@@ -265,6 +276,94 @@ h1 {
     color: #aaa;
     font-size: 0.9em;
     font-style: italic;
+    margin-bottom: 10px;
+}
+
+.travel-button-container {
+    flex-shrink: 0;
+}
+
+.travel-button-container button {
+    min-height: 40px;
+    padding: 8px 16px;
+    font-size: 0.9em;
+    background: #2a2a2a;
+    border-color: #ffd700;
+    color: #ffd700;
+    display: block;
+}
+
+.travel-button-container button:hover {
+    background: #3a3a00;
+}
+
+.location-destinations {
+    margin-top: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-top: 15px;
+    border-top: 1px solid #444;
+}
+
+.location-destinations.hidden {
+    display: none;
+}
+
+.location-destinations h3 {
+    color: #ffd700;
+    font-size: 0.95em;
+    margin: 0 0 8px 0;
+    text-align: left;
+}
+
+.location-destinations button {
+    text-align: left;
+    min-height: 70px;
+    padding: 12px;
+    border-color: #ffd700;
+    background: #2a2a2a;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.location-destinations button:hover {
+    background: #3a3a00;
+}
+
+.destination-top-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: bold;
+}
+
+.destination-name {
+    flex: 1;
+    color: #ffd700;
+}
+
+.destination-time {
+    font-size: 0.85em;
+    opacity: 0.9;
+    white-space: nowrap;
+}
+
+.destination-desc {
+    font-size: 0.8em;
+    color: #b0b0b0;
+    line-height: 1.3;
+}
+
+.location-destinations .cancel {
+    border-color: #ff6b6b;
+    background: #3a2a2a;
+    min-height: auto;
+}
+
+.location-destinations .cancel:hover {
+    background: #5a2a2a;
 }
 
 .game-area {
@@ -323,18 +422,28 @@ h1 {
     gap: 10px;
     margin-bottom: 20px;
     min-height: 180px; /* Prevents height change during animation */
+    align-items: start; /* Prevent vertical stretching of buttons */
+}
+
+.actions.hidden {
+    display: none;
 }
 
 button {
     background: #3a3a3a;
     color: #e0e0e0;
     border: 2px solid #555;
-    padding: 15px;
+    padding: 12px;
     border-radius: 5px;
     cursor: pointer;
     font-family: 'Courier New', monospace;
     font-size: 1em;
     transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-height: 70px;
+    text-align: left;
 }
 
 button:hover {
@@ -439,6 +548,30 @@ button:disabled {
 button:disabled:hover {
     transform: none;
     background: #3a3a3a;
+}
+
+/* Action button structure */
+.action-top-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: bold;
+}
+
+.action-name {
+    flex: 1;
+}
+
+.action-time {
+    font-size: 0.85em;
+    opacity: 0.9;
+    white-space: nowrap;
+}
+
+.action-effects {
+    font-size: 0.8em;
+    color: #b0b0b0;
+    line-height: 1.3;
 }
 
 .game-over {

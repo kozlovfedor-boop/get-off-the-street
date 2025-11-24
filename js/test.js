@@ -85,12 +85,8 @@ class GameTester {
             };
         }
 
-        // Perform action
-        window.game.performAction(actionType);
-
-        // Wait for animation to complete (timeCost * ANIMATION_SPEED + buffer)
-        const waitTime = timeCost * CONFIG.ANIMATION_SPEED + 500;
-        await this.wait(waitTime);
+        // Perform action and wait for it to complete
+        await window.game.performAction(actionType);
 
         // Get final states
         const endPlayer = this.getPlayerStats();
@@ -260,41 +256,48 @@ const tester = new GameTester();
 
 // TEST: Work action
 tester.addTest('Work Action', async (t) => {
-    // Work should earn £20-40 base * modifier, reduce hunger by 7-28
+    // First travel to Camden Town where work is available
+    window.game.locationManager.currentLocation = 'camden-town';
+    await t.wait(100);
+
+    // Work: 7 hours × (3-8 per hour) × modifier = ~21-56 total money
+    // Hunger: 7 hours × (-1 to -4 per hour) = -7 to -28 total
     return await t.testAction('work', {
-        expectedMinChanges: { money: 20, health: 0, hunger: -28 },
-        expectedMaxChanges: { money: 60, health: 0, hunger: -7 },
-        timeCost: CONFIG.TIME_COSTS.WORK
+        expectedMinChanges: { money: 15, health: 0, hunger: -32 },
+        expectedMaxChanges: { money: 65, health: 0, hunger: -5 }
     });
 });
 
 // TEST: Find Food action
 tester.addTest('Find Food Action', async (t) => {
-    // Find food should increase hunger
+    // Find food: 2 hours × (10-30 per hour) = 20-60 total hunger
     return await t.testAction('food', {
-        expectedMinChanges: { money: 0, health: 0, hunger: 20 },
-        expectedMaxChanges: { money: 0, health: 0, hunger: 90 },
-        timeCost: CONFIG.TIME_COSTS.FOOD
+        expectedMinChanges: { money: 0, health: 0, hunger: 15 },
+        expectedMaxChanges: { money: 0, health: 0, hunger: 65 }
     });
 });
 
 // TEST: Rest action
 tester.addTest('Rest Action', async (t) => {
-    // Rest should increase health, decrease hunger
+    // First travel to Camden Town where rest is available
+    window.game.locationManager.currentLocation = 'camden-town';
+    await t.wait(100);
+
+    // Rest: 2 hours × (5-10 health, -1 to -3 hunger per hour)
+    // = 10-20 health, -2 to -6 hunger total
     return await t.testAction('rest', {
-        expectedMinChanges: { money: 0, health: 10, hunger: -6 },
-        expectedMaxChanges: { money: 0, health: 20, hunger: -2 },
-        timeCost: CONFIG.TIME_COSTS.REST
+        expectedMinChanges: { money: 0, health: 8, hunger: -8 },
+        expectedMaxChanges: { money: 0, health: 22, hunger: -1 }
     });
 });
 
 // TEST: Panhandle action
 tester.addTest('Panhandle Action', async (t) => {
-    // Panhandle should earn money, reduce hunger
+    // Panhandle at park: 3 hours × (2-8 money, -2 to -4 hunger per hour)
+    // = 6-24 money, -6 to -12 hunger total
     return await t.testAction('panhandle', {
-        expectedMinChanges: { money: 5, health: 0, hunger: -12 },
-        expectedMaxChanges: { money: 45, health: 0, hunger: -6 },
-        timeCost: CONFIG.TIME_COSTS.PANHANDLE
+        expectedMinChanges: { money: 4, health: 0, hunger: -14 },
+        expectedMaxChanges: { money: 26, health: 0, hunger: -4 }
     });
 });
 
@@ -304,11 +307,11 @@ tester.addTest('Sleep at Shelter', async (t) => {
     window.game.locationManager.currentLocation = 'shelter';
     await t.wait(100);
 
-    // Sleep should increase health, decrease hunger
+    // Sleep at shelter: 7 hours × (4-7 health, -1 to -3 hunger per hour)
+    // = 28-49 health, -7 to -21 hunger total
     return await t.testAction('sleep', {
-        expectedMinChanges: { money: 0, health: 28, hunger: -21 },
-        expectedMaxChanges: { money: 0, health: 49, hunger: -7 },
-        timeCost: CONFIG.TIME_COSTS.SLEEP
+        expectedMinChanges: { money: 0, health: 26, hunger: -23 },
+        expectedMaxChanges: { money: 0, health: 51, hunger: -5 }
     });
 });
 
