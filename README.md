@@ -146,21 +146,30 @@ Built with vanilla HTML, CSS, and JavaScript. No build process or dependencies r
   - Factory pattern for instantiation
   - Inheritance from BaseAction class
 - `UIManager`: DOM manipulation and rendering
+- `CharacterAnimationManager`: Sprite animations and backgrounds
 - `Game`: Main controller
+
+**Visual Features:**
+- Pixel art character sprite with 8-frame animations
+- Animated backgrounds for all 4 locations
+- Panoramic scrolling effects during travel
+- Side-scroller style movement (background scrolls opposite to travel direction)
 
 **File Structure:**
 ```
 /street
-├── index.html          # Main game page
+├── index.html                  # Main game page
 ├── css/
-│   └── styles.css      # All styles
+│   ├── styles.css              # Main styles
+│   └── character.css           # Character & background animations
 ├── js/
-│   ├── config.js       # Game constants
-│   ├── player.js       # Player state
-│   ├── time.js         # Time management
-│   ├── locations.js    # Location system
-│   ├── events.js       # Random events
-│   ├── actions/        # Action system
+│   ├── config.js               # Game constants
+│   ├── player.js               # Player state
+│   ├── time.js                 # Time management
+│   ├── locations.js            # Location system
+│   ├── events.js               # Random events
+│   ├── character-animation.js  # Character sprite animations
+│   ├── actions/                # Action system
 │   │   ├── base-action.js      # Base action class
 │   │   ├── action-utils.js     # Shared utilities
 │   │   ├── work-action.js      # Work action
@@ -170,8 +179,16 @@ Built with vanilla HTML, CSS, and JavaScript. No build process or dependencies r
 │   │   ├── steal-action.js     # Steal action
 │   │   ├── eat-action.js       # Eat action
 │   │   └── action-factory.js   # Action factory
-│   ├── ui.js           # UI management
-│   └── game.js         # Main controller
+│   ├── ui.js                   # UI management
+│   └── game.js                 # Main controller
+├── assets/
+│   ├── character/
+│   │   └── homeless-character.png  # 8-frame sprite sheet
+│   └── background/
+│       ├── bg-city-park.png        # Park background
+│       ├── bg-london-city.png      # London City background
+│       ├── bg-camden-town.png      # Camden Town background
+│       └── bg-homeless-shelter.png # Shelter background
 └── README.md
 ```
 
@@ -189,9 +206,10 @@ Built with vanilla HTML, CSS, and JavaScript. No build process or dependencies r
 
 ---
 
-**Current Version:** 2.1.0
+**Current Version:** 2.2.0
 
 **Changelog:**
+- **v2.2.0**: Added pixel art character animations and panoramic background scrolling
 - **v2.1.0**: UI redesign with progress bars and improved stats layout
 - **v2.0.0**: Added locations and time of day system
 - **v1.0.0**: Initial MVP release

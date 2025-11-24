@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Goal:** Player starts homeless and must survive to save £2,000 to rent an apartment.
 
-**Current Version:** 2.1.0 - UI Redesign with Progress Bars
+**Current Version:** 2.2.0 - Character Animations & Panoramic Backgrounds
 
 ## Running the Game
 
@@ -26,16 +26,18 @@ The codebase follows a **modular class-based architecture** for scalability:
 
 ```
 /street
-├── index.html              # Main HTML (minimal, just structure)
+├── index.html                  # Main HTML (minimal, just structure)
 ├── css/
-│   └── styles.css          # All styles separated from HTML
+│   ├── styles.css              # Main game styles
+│   └── character.css           # Character animations & backgrounds (NEW v2.2)
 ├── js/
-│   ├── config.js           # Game configuration and constants
-│   ├── player.js           # Player class - state management
-│   ├── time.js             # TimeManager class - 24-hour clock
-│   ├── locations.js        # LocationManager class - locations & travel
-│   ├── events.js           # EventManager class - random events
-│   ├── actions/            # Action system (factory pattern + inheritance)
+│   ├── config.js               # Game configuration and constants
+│   ├── player.js               # Player class - state management
+│   ├── time.js                 # TimeManager class - 24-hour clock
+│   ├── locations.js            # LocationManager class - locations & travel
+│   ├── events.js               # EventManager class - random events
+│   ├── character-animation.js  # CharacterAnimationManager class (NEW v2.2)
+│   ├── actions/                # Action system (factory pattern + inheritance)
 │   │   ├── base-action.js      # BaseAction class - abstract base
 │   │   ├── action-utils.js     # Shared utility functions
 │   │   ├── work-action.js      # WorkAction class
@@ -45,8 +47,16 @@ The codebase follows a **modular class-based architecture** for scalability:
 │   │   ├── steal-action.js     # StealAction class
 │   │   ├── eat-action.js       # EatAction class
 │   │   └── action-factory.js   # createAction() factory function
-│   ├── ui.js               # UIManager class - DOM manipulation
-│   └── game.js             # Game class - main controller
+│   ├── ui.js                   # UIManager class - DOM manipulation
+│   └── game.js                 # Game class - main controller
+├── assets/                     # Game assets (NEW v2.2)
+│   ├── character/
+│   │   └── homeless-character.png  # 8-frame sprite sheet (256x256px)
+│   └── background/
+│       ├── bg-city-park.png        # Park background (1400x600px)
+│       ├── bg-london-city.png      # London City background (1400x600px)
+│       ├── bg-camden-town.png      # Camden Town background (1400x600px)
+│       └── bg-homeless-shelter.png # Shelter background (1400x600px)
 └── README.md
 ```
 
@@ -103,11 +113,20 @@ The codebase follows a **modular class-based architecture** for scalability:
 - **Action Factory** (action-factory.js): Creates appropriate action instance via switch statement
 - **Action Utils** (action-utils.js): Shared utilities (`random()`, `applyStarvation()`)
 
+**character-animation.js** - Character animation system (NEW v2.2)
+- `CharacterAnimationManager` class handles sprite animations and backgrounds
+- Methods: `init()`, `updateLocation()`, `setAnimation()`, `setIdle()`, `getAnimationClass()`
+- Manages 8-frame sprite animations: idle, walk-left, walk-right
+- Updates location backgrounds dynamically
+- Integrated with travel system for walking animations
+
 **ui.js** - UI management
 - `UIManager` class handles all DOM updates
 - Methods: `updateStats()`, `updateTime()`, `updateLocation()`, `addLog()`, `showGameOver()`, `showVictory()`
 - `renderActionButtons()` - dynamically creates buttons based on location + time
 - `showTravelMenu()` - displays travel destination options
+- `startBackgroundScroll()` - triggers panoramic scrolling animations (NEW v2.2)
+- `stopBackgroundScroll()` - stops scrolling and resets animation state (NEW v2.2)
 - Manages log entries (max 20 entries)
 - Handles progress bar updates and critical state animations
 - Event-driven via dynamically created buttons
@@ -159,6 +178,56 @@ UI updates: stats, time display, location display, re-renders action buttons
 ```
 
 ### Key Game Systems
+
+**Character Animation System (NEW v2.2)**
+
+The game features a pixel art character with sprite animations and panoramic background scrolling.
+
+*Visual Components:*
+- **Character Sprite**: 8-frame animations (idle, walk-left, walk-right)
+  - Source: 256×256px sprite sheet (8×4 grid, 32×32px frames)
+  - Display: 108×108px (scaled 1.5x for visibility)
+  - Animation technique: CSS background-position with steps() timing
+- **Backgrounds**: PNG images for all 4 locations
+  - Source: 1400×600px images
+  - Display: 467×200px (3x scale down, maintains proportions)
+  - Dual-layer system for panoramic scrolling
+
+*Animation System:*
+```
+CharacterAnimationManager
+├── Sprite Animations (CSS keyframes)
+│   ├── sprite-idle: 8 frames, 1.6s loop
+│   ├── sprite-walk-right: 8 frames, 0.8s loop
+│   └── sprite-walk-left: 8 frames, 0.8s loop
+└── Background System
+    ├── Static backgrounds (4 locations)
+    └── Scrolling backgrounds (travel transitions)
+```
+
+*Dual-Layer Background Scrolling:*
+- **Main Element**: Displays destination background
+- **::before Pseudo-element**: Displays origin background
+- **Z-Index Layering**: origin (z-1) → destination (z-0) → character (z-10)
+- **Animation**: Both layers scroll simultaneously
+  - Travel right: backgrounds scroll left (side-scroller effect)
+  - Travel left: backgrounds scroll right
+- **Technical Implementation**:
+  - `startBackgroundScroll()`: Sets data-location, forces reflow, adds animation classes via requestAnimationFrame
+  - `stopBackgroundScroll()`: Removes classes and attributes, forces reflow to allow animation retriggering
+  - Reflow forcing prevents CSS animation bug where classes don't retrigger on multi-hop travel
+
+*Character Animation States:*
+- **Idle**: Default state, slow breathing animation (1.6s loop)
+- **Walk Right**: Used when traveling to higher-indexed locations (park → camden → london)
+- **Walk Left**: Used when traveling to lower-indexed locations (london → camden → park)
+
+*Integration with Game:*
+1. `CharacterAnimationManager.init()` - Initialize DOM references
+2. `updateLocation()` - Update background when location changes
+3. `setAnimation(actionType, direction)` - Set character animation during actions
+4. `setIdle()` - Return to idle state after action completes
+5. Travel triggers: `startBackgroundScroll()` → animate → `stopBackgroundScroll()`
 
 **Action System Architecture**
 
@@ -434,6 +503,12 @@ Row 3: Hunger bar (col 1, left-aligned)
 
 ## Version History
 
+- **v2.2.0**: Character animations and panoramic background scrolling
+  - Added 8-frame pixel art character sprite with idle/walk animations
+  - Integrated PNG backgrounds for all 4 locations (1400×600px, displayed at 467×200px)
+  - Implemented dual-layer panoramic scrolling system during travel
+  - Fixed CSS animation retriggering bug for multi-hop travel using reflow forcing
+  - Character scales 1.5x for visibility, backgrounds maintain aspect ratio
 - **v2.1.0**: UI redesign with progress bars and improved stats layout
 - **v2.0.0**: Locations and time of day system
 - **v1.0.0**: Initial MVP with basic survival mechanics
