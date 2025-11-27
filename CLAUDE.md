@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Goal:** Player starts homeless and must survive to save £2,000 to rent an apartment.
 
-**Current Version:** 2.2.0 - Character Animations & Panoramic Backgrounds
+**Current Version:** 2.3.0 - Location-Owned Pre-Configured Actions (Architectural Refactor)
 
 ## Running the Game
 
@@ -72,6 +72,13 @@ The codebase follows a **modular class-based architecture** for scalability:
 **config.js** - Central configuration
 - All game constants (win conditions, stat limits, time costs)
 - Location IDs
+- **ACTION_PRESETS** (NEW v2.3): Standardized effect levels for actions
+  - `earnings`: high [30,60], medium [20,40], low [5,20]
+  - `health`: high [30,50], medium [15,30], low [6,10]
+  - `hunger`: high [-25,-10], medium [-15,-8], low [-10,-5]
+  - `risk`: high 0.30, medium 0.15, low 0.05
+  - `reward`: high [50,100], medium [30,60], low [10,30]
+  - `food`: high [40,60], medium [20,45], low [10,25]
 - Easy to modify for game balance
 - No logic, just data
 
@@ -91,12 +98,14 @@ The codebase follows a **modular class-based architecture** for scalability:
 **locations/** - Location system (class hierarchy + factory pattern)
 - **Class Hierarchy**: All locations extend `BaseLocation` abstract class
 - **BaseLocation** (base-location.js): Defines interface for all locations
-  - Properties: `id`, `name`, `description`
-  - Methods: `getActions()`, `getTravelTime()`, `getPayModifier()`, `getRiskModifier()`, `isActionAvailable()`
-  - Preview methods: `getSleepPreview()`, `getWorkPreview()`, `getPanhandlePreview()`
+  - Properties: `id`, `name`, `description`, `actions` (object of pre-configured action instances)
+  - Methods: `getActions()` (returns action IDs), `getAction(actionId)` (returns action instance), `getTravelTime()`, `isActionAvailable()`
+  - **REMOVED in v2.3**: `getPayModifier()`, `getRiskModifier()`, preview methods - now handled by action configs
 - **Specific Locations**: ShelterLocation, ParkLocation, CamdenTownLocation, LondonCityLocation
-  - Each location encapsulates its own behavior, effects, and restrictions
-  - Location-specific data (sleep duration, pay multipliers, risk) lives in the location class
+  - **NEW v2.3**: Each location owns pre-instantiated action objects with preset configs
+  - Example: `this.actions = { 'work': new WorkAction({ earnings: 'high', hunger: 'high' }) }`
+  - Location-specific action configurations live in constructor
+  - Each location defines which actions are available and their difficulty/reward levels
 - **Factory Pattern**: `createLocation(id)` instantiates appropriate location class
 
 **location-service.js** - Location coordination service
@@ -104,9 +113,8 @@ The codebase follows a **modular class-based architecture** for scalability:
 - Manages current location and delegates to location instances for behavior
 - `getCurrentLocation()` - returns current location instance
 - `isActionAvailable(action)` - delegates to location's method
-- `getRiskModifier(action)` - delegates to location's method
-- `getPayModifier()` - delegates to location's method
 - `travel(destinationId)` - handles travel between locations with path calculation
+- **REMOVED in v2.3**: `getRiskModifier()`, `getPayModifier()` - no longer needed, configs live in action instances
 
 **events.js** - Random event system
 - `EventManager` class handles probability-based events
@@ -115,21 +123,22 @@ The codebase follows a **modular class-based architecture** for scalability:
 - `trigger()` uses cumulative probability distribution
 - Extensible: `addEvent()`, `removeEvent()`, `getEvent()` methods
 
-**actions/** - Action System (Factory Pattern + Inheritance)
-- **Factory Pattern**: `createAction()` instantiates appropriate action class based on type
+**actions/** - Action System (Preset-Based Configuration + Inheritance)
+- **NEW v2.3 Architecture**: Locations own pre-configured action instances; actions are reusable objects
 - **Inheritance**: All actions extend `BaseAction` class
 - **BaseAction** (base-action.js):
-  - Abstract base class with common functionality
-  - Methods: `isInstant()`, `applyStats()`, `clampStats()`, `random()`
-  - Abstract methods to override: `execute()`, `calculatePerHourStats()`, `generateLogMessage()`
+  - Constructor: `constructor(config = {})` - accepts preset-based config (e.g., `{earnings: 'high', hunger: 'medium'}`)
+  - Execute: `execute(player, locationManager, timeManager)` - runtime dependencies injected at execution
+  - Methods: `isInstant()`, `applyStats()`, `clampStats()`, `random()`, `getPreview()` (instance method, not static)
+  - Abstract methods to override: `execute()`, `calculatePerHourStats()`, `generateLogMessage()`, `getPreview()`
 - **Individual Action Classes**:
-  - `WorkAction` (work-action.js) - 7 hours, deferred payment, accumulates earnings
-  - `PanhandleAction` (panhandle-action.js) - 3 hours, immediate payment each hour
-  - `FindFoodAction` (find-food-action.js) - 2 hours, random hunger gain per hour
-  - `SleepAction` (sleep-action.js) - 7/2 hours, health recovery (location-dependent)
-  - `StealAction` (steal-action.js) - 1 hour, risky outcomes (police/robbery)
-  - `EatAction` (eat-action.js) - Instant, dedicated shelter action
-- **Action Factory** (action-factory.js): Creates appropriate action instance via switch statement
+  - `WorkAction` - Config: earnings (preset), hunger (preset)
+  - `PanhandleAction` - Config: earnings (preset), hunger (preset)
+  - `FindFoodAction` - Config: food (preset)
+  - `SleepAction` - Config: health (preset), hunger (preset), timeCost, safe (bool), risk, robberyAmount
+  - `StealAction` - Config: risk (preset or number), reward (preset), hunger (preset)
+  - `EatAction` - Config: food (preset)
+- **Action Factory** (action-factory.js): **DEPRECATED in v2.3** - actions created by locations, not factory
 - **Action Utils** (action-utils.js): Shared utilities (`random()`, `applyStarvation()`)
 
 **character-animation.js** - Character animation system (NEW v2.2)
@@ -153,13 +162,13 @@ The codebase follows a **modular class-based architecture** for scalability:
 **game.js** - Main controller
 - `Game` class orchestrates all other modules
 - Owns instances of: Player, TimeManager, LocationService, EventManager, UIManager
-- Uses: Action factory pattern (no ActionManager instance)
+- **CHANGED v2.3**: Gets actions from locations, not factory
 - Uses: Location factory pattern via LocationService (no direct location instantiation)
-- `performAction(actionType)` - creates action via factory, executes it
+- `performAction(actionType)` - gets action from location via `location.getAction()`, executes with runtime dependencies
 - `executeAction(action, result)` - hour-by-hour execution with per-hour stats and logging
 - `travel(destinationId)` - handles location changes
 - `advanceTime(hours)` - processes time advancement, starvation, events, game state
-- Turn flow: action creation → execution → per-hour processing → time advance → starvation check → random event → game state check → UI update
+- Turn flow: get action from location → execute with dependencies → per-hour processing → time advance → starvation check → random event → game state check → UI update
 
 ### Data Flow
 
@@ -168,15 +177,17 @@ User clicks action button
   ↓
 UIManager dynamically created onclick calls game.performAction('work')
   ↓
-Game checks locationManager.isActionAvailable('work')
+Game gets current location via locationManager.getCurrentLocation()
   ↓
-Game calls createAction('work', player, locationManager, timeManager)
+Game checks location.isActionAvailable('work', timeManager)
   ↓
-Factory returns WorkAction instance
+Game gets pre-configured action via location.getAction('work')
   ↓
-Game calls workAction.execute()
+Location returns its WorkAction instance (configured with earnings: 'high', hunger: 'high')
   ↓
-WorkAction uses locationManager.getPayModifier() to calculate earnings
+Game calls workAction.execute(player, locationManager, timeManager)
+  ↓
+WorkAction uses CONFIG.ACTION_PRESETS to get ranges for earnings and hunger
 Returns {type, message, logType, timeCost, statChanges, perHourCalculation}
   ↓
 Game calls game.executeAction(workAction, result)
@@ -324,101 +335,139 @@ BaseAction (Abstract)
 3. Add UI elements to index.html
 4. Update `UIManager.updateStats()` in ui.js
 
-**Adding new actions:**
+**Adding new actions (UPDATED for v2.3):**
 
 1. **Create new action class file** in `js/actions/` (e.g., `beg-action.js`):
    ```javascript
    // Beg action - ask for help (2 hours)
    class BegAction extends BaseAction {
-       execute() {
-           // Generate outcome and return result object
-           const earnings = this.random(5, 15);
-           const hungerCost = this.random(3, 7);
+       constructor(config = {}) {
+           super(config);
+           this.config = {
+               earnings: config.earnings || 'low',
+               hunger: config.hunger || 'low'
+           };
+       }
+
+       execute(player, locationManager, timeManager) {
+           this.player = player;
+           this.locationManager = locationManager;
+           this.timeManager = timeManager;
+
+           // Use preset ranges from CONFIG.ACTION_PRESETS
+           const earningsRange = CONFIG.ACTION_PRESETS.earnings[this.config.earnings];
+           const hungerRange = CONFIG.ACTION_PRESETS.hunger[this.config.hunger];
+
+           const earnings = this.random(...earningsRange);
+           const hungerCost = this.random(...hungerRange);
 
            return {
                type: 'beg',
-               message: `You begged for help. Earned £${earnings}. Hunger -${hungerCost}.`,
+               message: `You begged for help. Earned £${earnings}. Hunger ${hungerCost}.`,
                logType: 'neutral',
                timeCost: 2,
                statChanges: {
                    money: earnings,
                    health: 0,
-                   hunger: -hungerCost
+                   hunger: hungerCost
                },
                perHourCalculation: 'beg'
            };
        }
 
        calculatePerHourStats(hourIndex) {
-           // Per-hour logic (random money each hour)
+           const earningsRange = CONFIG.ACTION_PRESETS.earnings[this.config.earnings];
+           const perHourMin = Math.floor(earningsRange[0] / 2);
+           const perHourMax = Math.ceil(earningsRange[1] / 2);
            return {
-               moneyChange: this.random(2, 7),
+               moneyChange: this.random(perHourMin, perHourMax),
                healthChange: 0,
-               hungerChange: -this.random(1, 3)
+               hungerChange: this.random(-2, -1)
            };
        }
 
        generateLogMessage(hourIndex, totalHours, stats) {
-           // Log message for each hour
            return {
                message: `Begging: Hour ${hourIndex + 1}/${totalHours} - Earned £${stats.moneyChange}, Hunger ${stats.hungerChange}`,
                logType: 'neutral'
            };
        }
+
+       getPreview() {
+           const earningsRange = CONFIG.ACTION_PRESETS.earnings[this.config.earnings];
+           const hungerRange = CONFIG.ACTION_PRESETS.hunger[this.config.hunger];
+           return {
+               timeCost: 2,
+               effects: {
+                   money: earningsRange,
+                   health: [0, 0],
+                   hunger: hungerRange
+               },
+               notes: null
+           };
+       }
    }
    ```
 
-2. **Add to factory** (`action-factory.js`):
-   ```javascript
-   case 'beg':
-       return new BegAction(player, locationManager, timeManager);
-   ```
-
-3. **Add script tag** to `index.html` (after base-action.js, before action-factory.js):
+2. **Add script tag** to `index.html` (after base-action.js):
    ```html
    <script src="js/actions/beg-action.js"></script>
    ```
 
-4. **Add to location's actions array** in the location class:
+3. **Add to location's actions object** in the location class constructor:
    ```javascript
-   // In park-location.js (or whichever location)
-   getActions() {
-       return ['work', 'food', 'beg', 'sleep'];  // Add 'beg'
-   }
+   // In park-location.js constructor
+   this.actions = {
+       'sleep': new SleepAction({ health: 'medium', hunger: 'low', timeCost: 3, ... }),
+       'panhandle': new PanhandleAction({ earnings: 'low', hunger: 'low' }),
+       'food': new FindFoodAction({ food: 'medium' }),
+       'beg': new BegAction({ earnings: 'low', hunger: 'low' })  // Add this
+   };
    ```
 
-5. **Add button styling** in `styles.css`:
+4. **Add button styling** in `styles.css`:
    ```css
    .beg { background: linear-gradient(135deg, #9c27b0, #673ab7); }
    ```
 
-6. **Add action name mapping** in `UIManager.createActionButton()` (ui.js):
+5. **Add action name mapping** in `UIManager.createActionButton()` (ui.js):
    ```javascript
    case 'beg': return 'Beg for Help';
    ```
 
-**Adding new locations:**
+**Adding new locations (UPDATED for v2.3):**
 
 1. **Create new location class** in `js/locations/` (e.g., `train-station-location.js`):
    ```javascript
    class TrainStationLocation extends BaseLocation {
        constructor() {
            super('train-station', 'Train Station', 'Busy transit hub.');
-       }
 
-       getActions() {
-           return ['panhandle', 'steal'];
+           // Pre-configure actions with preset levels
+           this.actions = {
+               'panhandle': new PanhandleAction({
+                   earnings: 'medium',  // £20-40 (decent traffic)
+                   hunger: 'low'        // -10 to -5
+               }),
+               'steal': new StealAction({
+                   risk: 'medium',      // 15% police
+                   reward: 'medium',    // £30-60
+                   hunger: 'low'
+               })
+           };
        }
 
        getTravelTime() {
            return { 'camden-town': 0.5 };
        }
 
-       getPanhandlePreview() {
-           return { earnings: [10, 25] };
+       isActionAvailable(action, timeManager) {
+           if (!this.actions[action]) {
+               return { available: false, reason: `Can't ${action} here` };
+           }
+           // Add time restrictions if needed
+           return { available: true };
        }
-
-       // Override other methods as needed...
    }
    ```
 
@@ -629,6 +678,19 @@ Full details: See `docs/desktop-testing-guide.md`
 
 ## Version History
 
+- **v2.3.0**: Location-Owned Pre-Configured Actions (Architectural Refactor)
+  - **Major architectural refactor** to eliminate duplication and circular dependencies
+  - Added `ACTION_PRESETS` in config.js for standardized effect levels (high/medium/low)
+  - Locations now own pre-instantiated action objects with preset configurations
+  - Actions accept config in constructor and runtime dependencies in execute()
+  - Removed circular dependencies (actions no longer query locations)
+  - Removed location preview methods (getSleepPreview, getWorkPreview, getPanhandlePreview)
+  - Removed getPayModifier() and getRiskModifier() from locations (configs now in actions)
+  - Changed getPreview() from static to instance method on actions
+  - Updated BaseAction constructor pattern: `constructor(config)` + `execute(player, locationManager, timeManager)`
+  - Updated all 6 action classes to use preset system
+  - Single source of truth for action configurations (locations define configs once)
+  - **Benefits**: No duplication, no data mismatches, cleaner separation of concerns
 - **v2.2.0**: Character animations and panoramic background scrolling
   - Added 8-frame pixel art character sprite with idle/walk animations
   - Integrated PNG backgrounds for all 4 locations (1400×600px, displayed at 467×200px)
