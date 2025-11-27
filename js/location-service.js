@@ -113,43 +113,4 @@ class LocationService {
         return location.isActionAvailable(action, this.timeManager);
     }
 
-    // Get location-specific risk modifier
-    // Delegates to location instance
-    getRiskModifier(action) {
-        const location = this.getCurrentLocation();
-        return location.getRiskModifier(action, this.timeManager);
-    }
-
-    // Get location-specific pay modifier
-    // Delegates to location instance
-    getPayModifier() {
-        const location = this.getCurrentLocation();
-        return location.getPayModifier();
-    }
-
-    // Check if shelter has capacity (random chance of being turned away late)
-    // This is shelter-specific logic, but kept here for backward compatibility
-    // TODO: Could move to ShelterLocation if needed
-    checkShelterCapacity() {
-        const hour = this.timeManager.getHour();
-
-        // After 10pm, 20% chance of being turned away
-        if (hour >= 22 || hour < 6) {
-            return Math.random() > 0.20;
-        }
-
-        return true; // Always has room before 10pm
-    }
-
-    // Get state for saving
-    getState() {
-        return {
-            currentLocation: this.currentLocation
-        };
-    }
-
-    // Load state
-    loadState(state) {
-        this.currentLocation = state.currentLocation;
-    }
 }

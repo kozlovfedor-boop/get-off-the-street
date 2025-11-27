@@ -109,34 +109,6 @@ class UIManager {
         this.elements.actions.classList.remove('hidden');
     }
 
-    // Get action class for preview
-    getActionClass(actionType) {
-        const actionClassMap = {
-            'work': WorkAction,
-            'panhandle': PanhandleAction,
-            'food': FindFoodAction,
-            'sleep': SleepAction,
-            'rest': SleepAction,
-            'steal': StealAction,
-            'eat': EatAction
-        };
-        return actionClassMap[actionType];
-    }
-
-    // Format stat change for display
-    formatStatChange(stat, range, isPositive) {
-        const [min, max] = range;
-        if (min === 0 && max === 0) return null;
-
-        const sign = isPositive ? '+' : '';
-        const prefix = stat === 'money' ? '£' : '';
-
-        if (min === max) {
-            return `${sign}${prefix}${min}`;
-        }
-        return `${sign}${prefix}${min} to ${sign}${prefix}${max}`;
-    }
-
     // Create action button with time and effects
     createActionButton(action, availability, location) {
         const button = document.createElement('button');
