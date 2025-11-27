@@ -297,6 +297,16 @@ h1 {
     background: #3a3a00;
 }
 
+.travel-button-container button.cancel-mode {
+    border-color: #ff6b6b;
+    color: #ff6b6b;
+    background: #3a2a2a;
+}
+
+.travel-button-container button.cancel-mode:hover {
+    background: #5a2a2a;
+}
+
 .location-destinations {
     margin-top: 15px;
     display: flex;
@@ -354,16 +364,6 @@ h1 {
     font-size: 0.8em;
     color: #b0b0b0;
     line-height: 1.3;
-}
-
-.location-destinations .cancel {
-    border-color: #ff6b6b;
-    background: #3a2a2a;
-    min-height: auto;
-}
-
-.location-destinations .cancel:hover {
-    background: #5a2a2a;
 }
 
 .game-area {
@@ -710,4 +710,64 @@ button.travel-dest small {
 .action-time-remaining {
     font-size: 1em;
     color: #888;
+}
+
+/* === MOBILE RESPONSIVE LAYOUT === */
+@media (max-width: 768px) {
+    /* Reduce body padding for mobile */
+    body {
+        padding: 10px;
+    }
+
+    /* Single column layout */
+    .game-container {
+        grid-template-columns: 1fr;
+        gap: 15px;
+        padding: 10px;
+    }
+
+    /* Reorder columns: DateTime → Stats → Game */
+    .datetime-column {
+        order: 1;
+    }
+
+    .stats-column {
+        order: 2;
+    }
+
+    .game-column {
+        order: 3;
+    }
+
+    /* Remove side borders, they become horizontal dividers */
+    .stats-column,
+    .datetime-column {
+        border-left: none;
+        border-right: none;
+        border-bottom: 2px solid #444;
+        padding: 15px 10px;
+    }
+
+    .game-column {
+        padding: 10px;
+    }
+
+    /* Reduce game-area padding for mobile to match other sections */
+    .game-area {
+        padding: 10px;
+    }
+
+    /* Ensure action buttons work on small screens */
+    .actions {
+        gap: 10px;
+    }
+
+    /* Responsive header */
+    .header h1 {
+        font-size: 1.8em;
+    }
+
+    .subtitle {
+        font-size: 0.9em;
+    }
 }

@@ -1,7 +1,26 @@
 // Steal action - risky theft attempt (1 hour)
 class StealAction extends BaseAction {
-    execute() {
-        const policeRisk = this.locationManager.getRiskModifier('steal');
+    constructor(config = {}) {
+        super(config);
+        this.config = {
+            risk: config.risk !== undefined ? config.risk : 'medium',
+            reward: config.reward || 'high',
+            hunger: config.hunger || 'low'
+        };
+    }
+
+    execute(player, locationManager, timeManager) {
+        this.player = player;
+        this.locationManager = locationManager;
+        this.timeManager = timeManager;
+
+        // Get preset values
+        const policeRisk = typeof this.config.risk === 'string'
+            ? CONFIG.ACTION_PRESETS.risk[this.config.risk]
+            : this.config.risk;
+        const rewardRange = CONFIG.ACTION_PRESETS.reward[this.config.reward];
+        const hungerRange = CONFIG.ACTION_PRESETS.hunger[this.config.hunger];
+
         const caughtByPolice = Math.random() < policeRisk;
 
         let message, moneyChange = 0, healthChange = 0;
@@ -14,7 +33,7 @@ class StealAction extends BaseAction {
         } else {
             const success = Math.random() > 0.3; // 70% success if no police
             if (success) {
-                const stolen = this.random(50, 100);
+                const stolen = this.random(...rewardRange);
                 moneyChange = stolen;
                 message = `You successfully stole £${stolen}!`;
             } else {
@@ -23,7 +42,7 @@ class StealAction extends BaseAction {
             }
         }
 
-        const hungerCost = this.random(5, 15);
+        const hungerCost = this.random(...hungerRange);
 
         return {
             type: 'steal',
@@ -33,7 +52,7 @@ class StealAction extends BaseAction {
             statChanges: {
                 money: moneyChange,
                 health: healthChange,
-                hunger: -hungerCost
+                hunger: hungerCost
             },
             perHourCalculation: 'steal'
         };
@@ -43,7 +62,7 @@ class StealAction extends BaseAction {
         // For steal, the result is already determined in execute()
         // We use the saved result instead of recalculating
         if (!this.savedResult) {
-            this.savedResult = this.execute();
+            this.savedResult = this.execute(this.player, this.locationManager, this.timeManager);
         }
         return {
             moneyChange: this.savedResult.statChanges.money,
@@ -55,7 +74,7 @@ class StealAction extends BaseAction {
     generateLogMessage(hourIndex, totalHours, stats) {
         // Use the message from execute() since it's dynamic
         if (!this.savedResult) {
-            this.savedResult = this.execute();
+            this.savedResult = this.execute(this.player, this.locationManager, this.timeManager);
         }
         return {
             message: this.savedResult.message,
@@ -63,15 +82,23 @@ class StealAction extends BaseAction {
         };
     }
 
-    static getPreview() {
+    getPreview() {
+        const rewardRange = CONFIG.ACTION_PRESETS.reward[this.config.reward];
+        const hungerRange = CONFIG.ACTION_PRESETS.hunger[this.config.hunger];
+        const policeRisk = typeof this.config.risk === 'string'
+            ? CONFIG.ACTION_PRESETS.risk[this.config.risk]
+            : this.config.risk;
+
+        const riskPercent = Math.round(policeRisk * 100);
+
         return {
             timeCost: CONFIG.TIME_COSTS.STEAL,
             effects: {
-                money: [-50, 100], // Caught fine or successful steal
+                money: [-50, rewardRange[1]], // Caught fine or successful steal
                 health: [-25, 0],  // Caught by police or someone
-                hunger: [-15, -5]
+                hunger: hungerRange
             },
-            notes: "risky"
+            notes: `${riskPercent}% police risk`
         };
     }
 }

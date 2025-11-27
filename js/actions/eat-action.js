@@ -1,7 +1,20 @@
 // Eat action - eat free meal at shelter (instant)
 class EatAction extends BaseAction {
-    execute() {
-        const foodAmount = this.random(40, 60);
+    constructor(config = {}) {
+        super(config);
+        this.config = {
+            food: config.food || 'high'
+        };
+    }
+
+    execute(player, locationManager, timeManager) {
+        this.player = player;
+        this.locationManager = locationManager;
+        this.timeManager = timeManager;
+
+        // Get preset range
+        const foodRange = CONFIG.ACTION_PRESETS.food[this.config.food];
+        const foodAmount = this.random(...foodRange);
 
         return {
             type: 'eat',
@@ -21,13 +34,15 @@ class EatAction extends BaseAction {
         return true;
     }
 
-    static getPreview() {
+    getPreview() {
+        const foodRange = CONFIG.ACTION_PRESETS.food[this.config.food];
+
         return {
             timeCost: 0, // Instant
             effects: {
                 money: [0, 0],
                 health: [0, 0],
-                hunger: [40, 60]
+                hunger: foodRange
             },
             notes: null
         };

@@ -33,8 +33,7 @@ const CONFIG = {
     // Time constants (in hours - all whole numbers)
     TIME_COSTS: {
         WORK: 7,
-        SLEEP: 7,
-        REST: 2,
+        SLEEP: 7,       // Default, overridden per location in SleepAction
         FOOD: 2,        // Changed from 1.5 to 2
         STEAL: 1,
         PANHANDLE: 3,   // Changed from 2.5 to 3
@@ -47,6 +46,40 @@ const CONFIG = {
         CAMDEN_TOWN: 'camden-town',
         SHELTER: 'shelter',
         PARK: 'park'
+    },
+
+    // Action effect presets (high/medium/low)
+    ACTION_PRESETS: {
+        earnings: {
+            high: [30, 60],
+            medium: [20, 40],
+            low: [5, 20]
+        },
+        health: {
+            high: [30, 50],
+            medium: [15, 30],
+            low: [6, 10]
+        },
+        hunger: {
+            high: [-25, -10],   // High hunger cost
+            medium: [-15, -8],
+            low: [-10, -5]
+        },
+        risk: {
+            high: 0.30,         // 30% chance
+            medium: 0.15,
+            low: 0.05
+        },
+        reward: {
+            high: [50, 100],    // Steal rewards
+            medium: [30, 60],
+            low: [10, 30]
+        },
+        food: {
+            high: [40, 60],     // Shelter meals
+            medium: [20, 45],   // Dumpster diving
+            low: [10, 25]
+        }
     }
 };
 

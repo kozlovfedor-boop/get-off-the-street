@@ -34,7 +34,14 @@ The codebase follows a **modular class-based architecture** for scalability:
 │   ├── config.js               # Game configuration and constants
 │   ├── player.js               # Player class - state management
 │   ├── time.js                 # TimeManager class - 24-hour clock
-│   ├── locations.js            # LocationManager class - locations & travel
+│   ├── locations/              # Location system (class hierarchy + factory)
+│   │   ├── base-location.js        # BaseLocation class - abstract base
+│   │   ├── shelter-location.js     # ShelterLocation class
+│   │   ├── park-location.js        # ParkLocation class
+│   │   ├── camden-town-location.js # CamdenTownLocation class
+│   │   ├── london-city-location.js # LondonCityLocation class
+│   │   └── location-factory.js     # createLocation() factory function
+│   ├── location-service.js     # LocationService class - coordinates locations & travel
 │   ├── events.js               # EventManager class - random events
 │   ├── character-animation.js  # CharacterAnimationManager class (NEW v2.2)
 │   ├── actions/                # Action system (factory pattern + inheritance)
@@ -81,13 +88,25 @@ The codebase follows a **modular class-based architecture** for scalability:
 - `formatTime()` - converts decimal hours to HH:MM format
 - `isDaytime()`, `isNighttime()` - time period checks
 
-**locations.js** - Location system (NEW in v2.0)
-- `LocationManager` class with 4 locations: london-city, camden-town, shelter, park
-- Each location has: name, description, available actions, travel times to other locations
-- `isActionAvailable(action)` - checks location + time restrictions
-- `getRiskModifier(action)` - returns police/robbery risk for location
-- `getPayModifier()` - returns salary multiplier for location
-- `travel(destinationId)` - moves player to new location
+**locations/** - Location system (class hierarchy + factory pattern)
+- **Class Hierarchy**: All locations extend `BaseLocation` abstract class
+- **BaseLocation** (base-location.js): Defines interface for all locations
+  - Properties: `id`, `name`, `description`
+  - Methods: `getActions()`, `getTravelTime()`, `getPayModifier()`, `getRiskModifier()`, `isActionAvailable()`
+  - Preview methods: `getSleepPreview()`, `getWorkPreview()`, `getPanhandlePreview()`
+- **Specific Locations**: ShelterLocation, ParkLocation, CamdenTownLocation, LondonCityLocation
+  - Each location encapsulates its own behavior, effects, and restrictions
+  - Location-specific data (sleep duration, pay multipliers, risk) lives in the location class
+- **Factory Pattern**: `createLocation(id)` instantiates appropriate location class
+
+**location-service.js** - Location coordination service
+- `LocationService` class coordinates location instances and travel (renamed from LocationManager)
+- Manages current location and delegates to location instances for behavior
+- `getCurrentLocation()` - returns current location instance
+- `isActionAvailable(action)` - delegates to location's method
+- `getRiskModifier(action)` - delegates to location's method
+- `getPayModifier()` - delegates to location's method
+- `travel(destinationId)` - handles travel between locations with path calculation
 
 **events.js** - Random event system
 - `EventManager` class handles probability-based events
@@ -133,8 +152,9 @@ The codebase follows a **modular class-based architecture** for scalability:
 
 **game.js** - Main controller
 - `Game` class orchestrates all other modules
-- Owns instances of: Player, TimeManager, LocationManager, EventManager, UIManager
+- Owns instances of: Player, TimeManager, LocationService, EventManager, UIManager
 - Uses: Action factory pattern (no ActionManager instance)
+- Uses: Location factory pattern via LocationService (no direct location instantiation)
 - `performAction(actionType)` - creates action via factory, executes it
 - `executeAction(action, result)` - hour-by-hour execution with per-hour stats and logging
 - `travel(destinationId)` - handles location changes
@@ -359,9 +379,12 @@ BaseAction (Abstract)
    <script src="js/actions/beg-action.js"></script>
    ```
 
-4. **Add to location's actions array** in `locations.js`:
+4. **Add to location's actions array** in the location class:
    ```javascript
-   actions: ['work', 'food', 'beg', 'rest']  // Add 'beg'
+   // In park-location.js (or whichever location)
+   getActions() {
+       return ['work', 'food', 'beg', 'sleep'];  // Add 'beg'
+   }
    ```
 
 5. **Add button styling** in `styles.css`:
@@ -375,10 +398,53 @@ BaseAction (Abstract)
    ```
 
 **Adding new locations:**
-1. Add location object to `locations` in LocationManager constructor
-2. Define: id, name, description, actions array, travelTime object
-3. Update `CONFIG.LOCATIONS` if needed
-4. Add location-specific logic in action class files if needed (e.g., pay modifiers in WorkAction)
+
+1. **Create new location class** in `js/locations/` (e.g., `train-station-location.js`):
+   ```javascript
+   class TrainStationLocation extends BaseLocation {
+       constructor() {
+           super('train-station', 'Train Station', 'Busy transit hub.');
+       }
+
+       getActions() {
+           return ['panhandle', 'steal'];
+       }
+
+       getTravelTime() {
+           return { 'camden-town': 0.5 };
+       }
+
+       getPanhandlePreview() {
+           return { earnings: [10, 25] };
+       }
+
+       // Override other methods as needed...
+   }
+   ```
+
+2. **Add to location factory** (`js/locations/location-factory.js`):
+   ```javascript
+   case 'train-station':
+       return new TrainStationLocation();
+   ```
+
+3. **Add to LocationService** (`js/location-service.js`):
+   ```javascript
+   this.locations = {
+       'shelter': createLocation('shelter'),
+       'park': createLocation('park'),
+       'camden-town': createLocation('camden-town'),
+       'london-city': createLocation('london-city'),
+       'train-station': createLocation('train-station')  // Add here
+   };
+   ```
+
+4. **Add script tag** to `index.html`:
+   ```html
+   <script src="js/locations/train-station-location.js"></script>
+   ```
+
+5. **Update travel times** in adjacent locations to include the new location
 
 **Adding new events:**
 ```javascript
@@ -417,9 +483,9 @@ Action ranges (in action class files):
 - Panhandle: £15-35 (London City), £5-20 (elsewhere)
 - Steal: 30% police (London), 15% police (Camden), then 70% success for £50-100
 
-Location travel times in `locations.js`:
-- Adjacent locations: 0.5 hours
-- Far locations: 1 hour
+Location travel times (defined in location class `getTravelTime()` methods):
+- Adjacent locations: 0.5 hours per hop
+- Path calculation handled by LocationService
 
 Event probabilities in `events.js`:
 - Filtered by location/time before roll
@@ -428,14 +494,21 @@ Event probabilities in `events.js`:
 
 ## Design Patterns Used
 
-- **Factory Pattern**: Action creation via `createAction()` factory function
-- **Template Method Pattern**: `BaseAction` with overridable methods (`execute()`, `calculatePerHourStats()`, `generateLogMessage()`)
-- **Inheritance**: All action classes extend `BaseAction` for code reuse
+- **Factory Pattern**:
+  - Action creation via `createAction()` factory function
+  - Location creation via `createLocation()` factory function
+- **Template Method Pattern**:
+  - `BaseAction` with overridable methods (`execute()`, `calculatePerHourStats()`, `generateLogMessage()`)
+  - `BaseLocation` with overridable methods (`getActions()`, `getTravelTime()`, `isActionAvailable()`)
+- **Inheritance**:
+  - All action classes extend `BaseAction` for code reuse
+  - All location classes extend `BaseLocation` for code reuse
+- **Service Layer Pattern**: `LocationService` coordinates location instances and delegates behavior
 - **Separation of Concerns**: Each class/module has single responsibility
 - **Dependency Injection**: Classes receive dependencies via constructor
 - **Dynamic UI**: Buttons created dynamically based on location/time state
 - **Configuration Object**: All constants centralized in CONFIG
-- **Manager Pattern**: Separate managers for Time, Location, Events, UI
+- **Manager Pattern**: Separate managers for Time, Events, UI
 - **State Machine**: Location and time determine available actions
 
 ## Common Development Tasks
@@ -500,6 +573,59 @@ Event probabilities in `events.js`:
 Row 1: Money (col 1) + Date/Time (col 2)
 Row 2: Health bar (col 1, left-aligned)
 Row 3: Hunger bar (col 1, left-aligned)
+
+## Chrome DevTools MCP Integration (v2.2+)
+
+### Setup
+
+MCP configured in `~/Library/Application Support/Claude/claude_desktop_config.json`
+
+### Quick Commands (via Claude Code)
+
+- "Load game in Chrome and show console"
+- "Run all E2E tests from test-mcp.js"
+- "Test [action] and verify stats"
+- "Check for errors during gameplay"
+- "Take screenshot of current state"
+- "Run performance analysis on animations"
+
+### Common MCP Commands (Claude Desktop)
+
+Quick commands for testing in Claude Desktop:
+
+1. **Quick validation**: "Load the game and verify it starts without errors"
+2. **Startup flow test**: "Run test_complete_startup_flow - load game, start, travel to Camden, work action, verify earnings £15-65"
+3. **Location test**: "Test location_actions - verify correct buttons at Park, Shelter, and London City"
+4. **Time test**: "Run time_progression test - verify time advances 06:00→08:00 during rest action"
+5. **Starvation test**: "Test starvation penalty - set hunger=15, rest, verify health decreased"
+6. **Visual check**: "Run visual_regression - verify stats layout, progress bars, action buttons"
+7. **Error monitoring**: "Play 10 random actions and report any console errors"
+
+Full details: See `docs/desktop-testing-guide.md`
+
+### Files
+
+- `js/monitor.js` - Error tracking (auto-loads with game)
+- `test-mcp.js` - E2E test definitions
+- `docs/mcp-testing-guide.md` - Full testing guide
+- `docs/mcp-quick-reference.md` - Command reference
+- `test-screenshots/` - Screenshot storage
+  - `baseline/` - Reference screenshots for visual regression
+
+### Workflow
+
+1. Make code changes
+2. Ask Claude: "Run regression tests"
+3. Claude executes via MCP, reports results with screenshots
+4. If pass: commit changes with confidence
+
+### Benefits
+
+- **Live Debugging**: Claude can automatically debug issues via Chrome DevTools
+- **E2E Testing**: Real browser automation with user interaction simulation
+- **Visual Regression**: Screenshot comparison for UI consistency
+- **Error Monitoring**: Automatic error tracking with game state context
+- **Performance Analysis**: Profile animations and identify bottlenecks
 
 ## Version History
 

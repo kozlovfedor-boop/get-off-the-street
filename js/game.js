@@ -3,7 +3,7 @@ class Game {
     constructor() {
         this.player = new Player();
         this.timeManager = new TimeManager(CONFIG.INITIAL_HOUR);
-        this.locationManager = new LocationManager(this.timeManager);
+        this.locationManager = new LocationService(this.timeManager);
         this.eventManager = new EventManager(this.locationManager, this.timeManager);
         this.ui = new UIManager(this.locationManager, this.timeManager);
 
@@ -24,18 +24,25 @@ class Game {
     async performAction(actionType) {
         if (this.gameOver || this.victory || this.isAnimating) return;
 
+        // Get current location
+        const location = this.locationManager.getCurrentLocation();
+
         // Check if action is available
-        const availability = this.locationManager.isActionAvailable(actionType);
+        const availability = location.isActionAvailable(actionType, this.timeManager);
         if (!availability.available) {
             this.ui.addLog(`Can't do that: ${availability.reason}`, 'negative', this.player.day, this.timeManager.formatTime());
             return;
         }
 
-        // Create action instance
-        const action = createAction(actionType, this.player, this.locationManager, this.timeManager);
+        // Get pre-configured action from location
+        const action = location.getAction(actionType);
+        if (!action) {
+            this.ui.addLog(`Action ${actionType} not found`, 'negative', this.player.day, this.timeManager.formatTime());
+            return;
+        }
 
-        // Action generates its own result
-        const result = action.execute();
+        // Execute action with runtime dependencies
+        const result = action.execute(this.player, this.locationManager, this.timeManager);
 
         // Execute the action
         await this.executeAction(action, result);

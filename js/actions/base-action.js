@@ -1,13 +1,16 @@
 // Base class for all actions
 class BaseAction {
-    constructor(player, locationManager, timeManager) {
-        this.player = player;
-        this.locationManager = locationManager;
-        this.timeManager = timeManager;
+    constructor(config = {}) {
+        this.config = config;
+        // Runtime dependencies injected via execute()
+        this.player = null;
+        this.locationManager = null;
+        this.timeManager = null;
     }
 
     // Each action implements these
-    execute() {
+    // Subclasses must accept runtime dependencies as parameters
+    execute(player, locationManager, timeManager) {
         throw new Error('Must override execute()');
     }
 
@@ -50,9 +53,9 @@ class BaseAction {
         return Math.floor(Math.random() * (max - min + 1)) + min;
     }
 
-    // Static method to get preview info for UI
-    // Override in subclasses to provide specific ranges
-    static getPreview() {
+    // Instance method to get preview info for UI
+    // Override in subclasses to provide specific ranges based on config
+    getPreview() {
         return {
             timeCost: 0,
             effects: {

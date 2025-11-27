@@ -1,7 +1,20 @@
 // Find food action - search for food in dumpsters over 2 hours
 class FindFoodAction extends BaseAction {
-    execute() {
-        const foodAmount = this.random(20, 45);
+    constructor(config = {}) {
+        super(config);
+        this.config = {
+            food: config.food || 'medium'
+        };
+    }
+
+    execute(player, locationManager, timeManager) {
+        this.player = player;
+        this.locationManager = locationManager;
+        this.timeManager = timeManager;
+
+        // Get preset range
+        const foodRange = CONFIG.ACTION_PRESETS.food[this.config.food];
+        const foodAmount = this.random(...foodRange);
 
         return {
             type: 'food',
@@ -18,10 +31,16 @@ class FindFoodAction extends BaseAction {
     }
 
     calculatePerHourStats(hourIndex) {
+        const foodRange = CONFIG.ACTION_PRESETS.food[this.config.food];
+
+        // Per-hour food gain
+        const perHourMin = Math.floor(foodRange[0] / CONFIG.TIME_COSTS.FOOD);
+        const perHourMax = Math.ceil(foodRange[1] / CONFIG.TIME_COSTS.FOOD);
+
         return {
             moneyChange: 0,
             healthChange: 0,
-            hungerChange: this.random(10, 30)
+            hungerChange: this.random(perHourMin, perHourMax)
         };
     }
 
@@ -32,13 +51,15 @@ class FindFoodAction extends BaseAction {
         };
     }
 
-    static getPreview() {
+    getPreview() {
+        const foodRange = CONFIG.ACTION_PRESETS.food[this.config.food];
+
         return {
             timeCost: CONFIG.TIME_COSTS.FOOD,
             effects: {
                 money: [0, 0],
                 health: [0, 0],
-                hunger: [20, 45]
+                hunger: foodRange
             },
             notes: null
         };

@@ -1,75 +1,85 @@
-// Sleep/Rest action - recover health over time (7 hours for sleep, 2 hours for rest)
+// Sleep action - recover health over time (location-dependent: 2-7 hours)
 class SleepAction extends BaseAction {
-    execute() {
-        const location = this.locationManager.getCurrentLocation();
-        let healthGain, hungerCost, message, risk, moneyLost = 0;
+    constructor(config = {}) {
+        super(config);
+        this.config = {
+            health: config.health || 'medium',
+            hunger: config.hunger || 'medium',
+            timeCost: config.timeCost || 7,
+            safe: config.safe !== undefined ? config.safe : false,
+            risk: config.risk || 0,
+            robberyAmount: config.robberyAmount || 'medium'
+        };
+    }
 
-        if (location.id === 'shelter') {
-            // Sleeping at shelter - safe and effective
-            healthGain = this.random(30, 50);
-            hungerCost = this.random(10, 20);
-            message = `You slept safely at the shelter. Health +${healthGain}, Hunger -${hungerCost}.`;
-            risk = null;
-            this.sleepType = 'shelter';
-        } else if (location.id === 'park') {
-            // Sleeping at park - risky
-            healthGain = this.random(20, 35);
-            hungerCost = this.random(10, 20);
-            risk = this.locationManager.getRiskModifier('sleep');
-            this.sleepType = 'park';
+    execute(player, locationManager, timeManager) {
+        this.player = player;
+        this.locationManager = locationManager;
+        this.timeManager = timeManager;
 
-            // Check for robbery
-            if (Math.random() < risk) {
-                const stolenAmount = Math.min(this.random(10, 30), this.player.money);
-                moneyLost = stolenAmount;
-                message = `You slept in the park but got robbed! Lost £${stolenAmount}. Health +${healthGain}, Hunger -${hungerCost}.`;
-            } else {
-                message = `You slept in the park. Health +${healthGain}, Hunger -${hungerCost}.`;
-            }
-        } else {
-            // Brief rest on streets
-            healthGain = this.random(10, 20);
-            hungerCost = this.random(5, 13);
-            message = `You took a brief rest. Health +${healthGain}, Hunger -${hungerCost}.`;
-            this.sleepType = 'rest';
+        // Get preset ranges
+        const healthRange = CONFIG.ACTION_PRESETS.health[this.config.health];
+        const hungerRange = CONFIG.ACTION_PRESETS.hunger[this.config.hunger];
+
+        const healthGain = this.random(...healthRange);
+        const hungerCost = this.random(...hungerRange);
+
+        // Handle robbery risk (park, camden-town)
+        if (!this.config.safe && this.config.risk > 0 && Math.random() < this.config.risk) {
+            const robberyRange = typeof this.config.robberyAmount === 'string'
+                ? CONFIG.ACTION_PRESETS.reward[this.config.robberyAmount]
+                : this.config.robberyAmount;
+            const stolen = this.random(...robberyRange);
+            const actualStolen = Math.min(stolen, this.player.money);
+
+            return {
+                type: 'sleep',
+                message: `You were robbed while sleeping! Lost £${actualStolen}. Health +${healthGain}, Hunger ${hungerCost}.`,
+                logType: 'negative',
+                timeCost: this.config.timeCost,
+                statChanges: {
+                    money: -actualStolen,
+                    health: healthGain,
+                    hunger: hungerCost
+                },
+                perHourCalculation: 'sleep'
+            };
         }
 
-        const timeCost = (location.id === 'shelter' || location.id === 'park') ?
-            CONFIG.TIME_COSTS.SLEEP : CONFIG.TIME_COSTS.REST;
+        // Safe sleep
+        const displayMessage = this.config.safe
+            ? `You slept safely. Health +${healthGain}, Hunger ${hungerCost}.`
+            : `You slept for ${this.config.timeCost} hours. Health +${healthGain}, Hunger ${hungerCost}.`;
 
         return {
             type: 'sleep',
-            message: message,
-            logType: risk && moneyLost > 0 ? 'negative' : 'positive',
-            timeCost: timeCost,
+            message: displayMessage,
+            logType: 'positive',
+            timeCost: this.config.timeCost,
             statChanges: {
-                money: -moneyLost,
+                money: 0,
                 health: healthGain,
-                hunger: -hungerCost
+                hunger: hungerCost
             },
-            perHourCalculation: 'sleep',
-            sleepType: this.sleepType
+            perHourCalculation: 'sleep'
         };
     }
 
     calculatePerHourStats(hourIndex) {
-        // sleepType is stored as instance variable after execute()
+        const healthRange = CONFIG.ACTION_PRESETS.health[this.config.health];
+        const hungerRange = CONFIG.ACTION_PRESETS.hunger[this.config.hunger];
+
+        // Per-hour recovery rates
+        const perHourHealthMin = Math.floor(healthRange[0] / this.config.timeCost);
+        const perHourHealthMax = Math.ceil(healthRange[1] / this.config.timeCost);
+        const perHourHungerMin = Math.floor(hungerRange[0] / this.config.timeCost);
+        const perHourHungerMax = Math.ceil(hungerRange[1] / this.config.timeCost);
+
         return {
             moneyChange: 0,
-            healthChange: this.getHealthRecoveryPerHour(this.sleepType),
-            hungerChange: -this.random(1, 3)
+            healthChange: this.random(perHourHealthMin, perHourHealthMax),
+            hungerChange: this.random(perHourHungerMin, perHourHungerMax)
         };
-    }
-
-    getHealthRecoveryPerHour(sleepType) {
-        if (sleepType === 'shelter') {
-            return this.random(4, 7);  // 4-7 per hour * 7 hours = 28-49 total
-        } else if (sleepType === 'park') {
-            return this.random(2, 5);  // 2-5 per hour * 7 hours = 14-35 total
-        } else if (sleepType === 'rest') {
-            return this.random(5, 10); // 5-10 per hour * 2 hours = 10-20 total
-        }
-        return 0;
     }
 
     generateLogMessage(hourIndex, totalHours, stats) {
@@ -79,17 +89,31 @@ class SleepAction extends BaseAction {
         };
     }
 
-    static getPreview() {
-        // Note: This shows shelter sleep stats as baseline
-        // UI will need to show location-specific info
+    getPreview() {
+        const healthRange = CONFIG.ACTION_PRESETS.health[this.config.health];
+        const hungerRange = CONFIG.ACTION_PRESETS.hunger[this.config.hunger];
+
+        let moneyRange = [0, 0];
+        if (!this.config.safe && this.config.risk > 0) {
+            const robberyRange = typeof this.config.robberyAmount === 'string'
+                ? CONFIG.ACTION_PRESETS.reward[this.config.robberyAmount]
+                : this.config.robberyAmount;
+            moneyRange = [-robberyRange[1], 0]; // Show max potential loss
+        }
+
+        const riskPercent = Math.round(this.config.risk * 100);
+        const notes = this.config.safe
+            ? 'Safe, best recovery'
+            : (this.config.risk > 0 ? `${riskPercent}% robbery risk` : null);
+
         return {
-            timeCost: CONFIG.TIME_COSTS.SLEEP, // 7 hours for shelter/park, 2 for rest
+            timeCost: this.config.timeCost,
             effects: {
-                money: [-30, 0], // Possible robbery at park
-                health: [10, 50], // Range from rest (10-20) to shelter (30-50)
-                hunger: [-20, -5]
+                money: moneyRange,
+                health: healthRange,
+                hunger: hungerRange
             },
-            notes: "varies by location"
+            notes: notes
         };
     }
 }

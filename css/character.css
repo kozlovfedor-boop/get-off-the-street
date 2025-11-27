@@ -256,3 +256,91 @@
 .character-sprite {
     transition: opacity 0.2s ease;
 }
+
+/* === MOBILE RESPONSIVE === */
+@media (max-width: 768px) {
+    /* Make character section fit mobile screens */
+    .character-section {
+        padding: 10px;
+        margin-bottom: 15px;
+    }
+
+    .character-display {
+        width: 100%;
+        max-width: 100%;
+        height: 180px; /* Slightly shorter for mobile */
+    }
+
+    /* Scale all background images proportionally for mobile */
+    .character-display[data-location="park"],
+    .character-display[data-location="london-city"],
+    .character-display[data-location="camden-town"],
+    .character-display[data-location="shelter"],
+    .character-display[data-location="shelter-to-park"],
+    .character-display[data-location="park-to-shelter"],
+    .character-display[data-location="park-to-camden-town"],
+    .character-display[data-location="camden-town-to-park"],
+    .character-display[data-location="camden-town-to-london-city"],
+    .character-display[data-location="london-city-to-camden-town"] {
+        background-size: 100% 100%;
+    }
+
+    /* Scale pseudo-element backgrounds for mobile */
+    .character-display::before {
+        background-size: 100% 100%;
+    }
+
+    /* Mobile-specific scroll animations using percentages */
+    @keyframes scroll-out-left-mobile {
+        0% {
+            background-position: center;
+        }
+        100% {
+            background-position: -100% center;
+        }
+    }
+
+    @keyframes scroll-in-from-right-mobile {
+        0% {
+            background-position: 100% center;
+        }
+        100% {
+            background-position: center;
+        }
+    }
+
+    @keyframes scroll-out-right-mobile {
+        0% {
+            background-position: center;
+        }
+        100% {
+            background-position: 100% center;
+        }
+    }
+
+    @keyframes scroll-in-from-left-mobile {
+        0% {
+            background-position: -100% center;
+        }
+        100% {
+            background-position: center;
+        }
+    }
+
+    /* Apply mobile animations */
+    .character-display.traveling-right::before {
+        animation: scroll-out-left-mobile 1s linear forwards;
+    }
+
+    .character-display.traveling-right {
+        animation: scroll-in-from-right-mobile 1s linear forwards;
+    }
+
+    .character-display.traveling-left::before {
+        animation: scroll-out-right-mobile 1s linear forwards;
+    }
+
+    .character-display.traveling-left {
+        animation: scroll-in-from-left-mobile 1s linear forwards;
+    }
+}

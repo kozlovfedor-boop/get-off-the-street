@@ -94,14 +94,14 @@ class UIManager {
     // Render action buttons based on current location and time
     renderActionButtons() {
         const location = this.locationManager.getCurrentLocation();
-        const actions = location.actions;
+        const actions = location.getActions();
 
         this.elements.actions.innerHTML = '';
 
         // Add location-specific action buttons
         actions.forEach(action => {
             const availability = this.locationManager.isActionAvailable(action);
-            const button = this.createActionButton(action, availability);
+            const button = this.createActionButton(action, availability, location);
             this.elements.actions.appendChild(button);
         });
 
@@ -138,7 +138,7 @@ class UIManager {
     }
 
     // Create action button with time and effects
-    createActionButton(action, availability) {
+    createActionButton(action, availability, location) {
         const button = document.createElement('button');
         button.className = action;
         button.setAttribute('data-action', action);
@@ -147,17 +147,16 @@ class UIManager {
         const actionNames = {
             'work': 'Find Work',
             'food': 'Find Food',
-            'sleep': 'Sleep/Rest',
-            'rest': 'Rest',
+            'sleep': 'Sleep',
             'steal': 'Steal',
             'panhandle': 'Panhandle',
             'eat': 'Eat Meal'
         };
         const actionName = actionNames[action] || action;
 
-        // Get preview data from action class
-        const ActionClass = this.getActionClass(action);
-        const preview = ActionClass ? ActionClass.getPreview() : null;
+        // Get preview data from action instance
+        const actionInstance = location.getAction(action);
+        const preview = actionInstance ? actionInstance.getPreview() : null;
 
         if (preview) {
             // Create two-line button structure
@@ -181,22 +180,58 @@ class UIManager {
 
             const effects = [];
 
-            // Money effect
-            const moneyText = this.formatStatChange('money', preview.effects.money, preview.effects.money[0] >= 0);
-            if (moneyText) {
-                effects.push(`💰 ${moneyText}`);
+            // Calculate rewards (positive effects)
+            const moneyReward = Math.max(0, preview.effects.money[1]); // Take max value for reward
+            const healthReward = Math.max(0, preview.effects.health[1]);
+
+            // Calculate risks (negative effects)
+            const moneyRisk = Math.abs(Math.min(0, preview.effects.money[0])); // Take min value for risk
+            const healthRisk = Math.abs(Math.min(0, preview.effects.health[0]));
+            const totalRisk = Math.max(moneyRisk, healthRisk); // Combined risk
+
+            // Money reward icons (3-tier: 0-25, 26-50, 51+)
+            if (moneyReward > 0) {
+                if (moneyReward <= 25) {
+                    effects.push('💰');
+                } else if (moneyReward <= 50) {
+                    effects.push('💰💰');
+                } else {
+                    effects.push('💰💰💰');
+                }
             }
 
-            // Health effect
-            const healthText = this.formatStatChange('health', preview.effects.health, preview.effects.health[0] >= 0);
-            if (healthText) {
-                effects.push(`❤️ ${healthText}`);
+            // Health reward icons (3-tier: 1-15, 16-30, 31+)
+            if (healthReward > 0) {
+                if (healthReward <= 15) {
+                    effects.push('❤️');
+                } else if (healthReward <= 30) {
+                    effects.push('❤️❤️');
+                } else {
+                    effects.push('❤️❤️❤️');
+                }
             }
 
-            // Hunger effect
-            const hungerText = this.formatStatChange('hunger', preview.effects.hunger, preview.effects.hunger[0] >= 0);
-            if (hungerText) {
-                effects.push(`🍔 ${hungerText}`);
+            // Hunger reward icons (3-tier: 1-15, 16-30, 31+)
+            const hungerReward = Math.max(0, preview.effects.hunger[1]);
+            if (hungerReward > 0) {
+                if (hungerReward <= 15) {
+                    effects.push('🍞');
+                } else if (hungerReward <= 30) {
+                    effects.push('🍞🍞');
+                } else {
+                    effects.push('🍞🍞🍞');
+                }
+            }
+
+            // Risk icons (3-tier: 1-15, 16-30, 31+)
+            if (totalRisk > 0) {
+                if (totalRisk <= 15) {
+                    effects.push('💀');
+                } else if (totalRisk <= 30) {
+                    effects.push('💀💀');
+                } else {
+                    effects.push('💀💀💀');
+                }
             }
 
             effectsLine.textContent = effects.join('  ');
@@ -230,6 +265,10 @@ class UIManager {
         const travelButton = document.createElement('button');
         // Toggle button text based on travelMode state
         travelButton.textContent = this.travelMode ? 'Cancel' : 'Travel';
+        // Add cancel-mode class when in travel mode
+        if (this.travelMode) {
+            travelButton.classList.add('cancel-mode');
+        }
         travelButton.onclick = () => this.toggleTravelMenu();
         this.elements.travelButtonContainer.appendChild(travelButton);
     }
@@ -305,13 +344,6 @@ class UIManager {
             };
             this.elements.locationDestinations.appendChild(button);
         });
-
-        // Cancel button
-        const cancelButton = document.createElement('button');
-        cancelButton.className = 'cancel';
-        cancelButton.textContent = 'Cancel';
-        cancelButton.onclick = () => this.hideTravelMenu();
-        this.elements.locationDestinations.appendChild(cancelButton);
 
         // Show destinations and hide actions
         this.elements.locationDestinations.classList.remove('hidden');

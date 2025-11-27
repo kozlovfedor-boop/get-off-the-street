@@ -1,42 +1,53 @@
 // Panhandle action - beg for money over 3 hours
 class PanhandleAction extends BaseAction {
-    execute() {
-        const location = this.locationManager.getCurrentLocation();
-        let earnings;
+    constructor(config = {}) {
+        super(config);
+        this.config = {
+            earnings: config.earnings || 'low',
+            hunger: config.hunger || 'low'
+        };
+    }
 
-        // Better panhandling in rich areas during day
-        if (location.id === 'london-city') {
-            earnings = this.random(15, 35);
-        } else {
-            earnings = this.random(5, 20);
-        }
+    execute(player, locationManager, timeManager) {
+        this.player = player;
+        this.locationManager = locationManager;
+        this.timeManager = timeManager;
 
-        const hungerCost = this.random(5, 10);
+        // Get preset ranges
+        const earningsRange = CONFIG.ACTION_PRESETS.earnings[this.config.earnings];
+        const hungerRange = CONFIG.ACTION_PRESETS.hunger[this.config.hunger];
+
+        const earnings = this.random(...earningsRange);
+        const hungerCost = this.random(...hungerRange);
 
         return {
             type: 'panhandle',
-            message: `You panhandled for money. Earned £${earnings}. Hunger -${hungerCost}.`,
+            message: `You panhandled for money. Earned £${earnings}. Hunger ${hungerCost}.`,
             logType: 'positive',
             timeCost: CONFIG.TIME_COSTS.PANHANDLE,
             statChanges: {
                 money: earnings,
                 health: 0,
-                hunger: -hungerCost
+                hunger: hungerCost
             },
             perHourCalculation: 'panhandle'
         };
     }
 
     calculatePerHourStats(hourIndex) {
-        const location = this.locationManager.getCurrentLocation();
-        const moneyChange = location.id === 'london-city'
-            ? this.random(6, 14)
-            : this.random(2, 8);
+        const earningsRange = CONFIG.ACTION_PRESETS.earnings[this.config.earnings];
+        const hungerRange = CONFIG.ACTION_PRESETS.hunger[this.config.hunger];
+
+        // Per-hour earnings and hunger cost
+        const perHourMin = Math.floor(earningsRange[0] / CONFIG.TIME_COSTS.PANHANDLE);
+        const perHourMax = Math.ceil(earningsRange[1] / CONFIG.TIME_COSTS.PANHANDLE);
+        const perHourHungerMin = Math.floor(hungerRange[0] / CONFIG.TIME_COSTS.PANHANDLE);
+        const perHourHungerMax = Math.ceil(hungerRange[1] / CONFIG.TIME_COSTS.PANHANDLE);
 
         return {
-            moneyChange: moneyChange,
+            moneyChange: this.random(perHourMin, perHourMax),
             healthChange: 0,
-            hungerChange: -this.random(2, 4)
+            hungerChange: this.random(perHourHungerMin, perHourHungerMax)
         };
     }
 
@@ -47,15 +58,18 @@ class PanhandleAction extends BaseAction {
         };
     }
 
-    static getPreview() {
+    getPreview() {
+        const earningsRange = CONFIG.ACTION_PRESETS.earnings[this.config.earnings];
+        const hungerRange = CONFIG.ACTION_PRESETS.hunger[this.config.hunger];
+
         return {
             timeCost: CONFIG.TIME_COSTS.PANHANDLE,
             effects: {
-                money: [5, 35],
+                money: earningsRange,
                 health: [0, 0],
-                hunger: [-10, -5]
+                hunger: hungerRange
             },
-            notes: "varies by location"
+            notes: null
         };
     }
 }
