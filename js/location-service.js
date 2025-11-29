@@ -108,9 +108,9 @@ class LocationService {
 
     // Check if action is available at current location and time
     // Delegates to location instance
-    isActionAvailable(action) {
+    isActionAvailable(action, player = null) {
         const location = this.getCurrentLocation();
-        return location.isActionAvailable(action, this.timeManager);
+        return location.isActionAvailable(action, this.timeManager, player);
     }
 
 }

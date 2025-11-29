@@ -28,7 +28,7 @@ class Game {
         const location = this.locationManager.getCurrentLocation();
 
         // Check if action is available
-        const availability = location.isActionAvailable(actionType, this.timeManager);
+        const availability = location.isActionAvailable(actionType, this.timeManager, this.player);
         if (!availability.available) {
             this.ui.addLog(`Can't do that: ${availability.reason}`, 'negative', this.player.day, this.timeManager.formatTime());
             return;

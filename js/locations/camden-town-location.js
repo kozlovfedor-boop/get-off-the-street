@@ -69,13 +69,22 @@ class CamdenTownLocation extends BaseLocation {
         };
     }
 
-    isActionAvailable(action, timeManager) {
+    isActionAvailable(action, timeManager, player = null) {
         if (!this.actions[action]) {
             return { available: false, reason: `Can't ${action} here` };
         }
 
         if (action === 'work' && !timeManager.isTimeBetween(6, 22)) {
             return { available: false, reason: 'Factories are closed (open 6am-10pm)' };
+        }
+
+        // Check affordability for buy-food action
+        if (action === 'buy-food' && player) {
+            const buyFoodAction = this.actions['buy-food'];
+            const affordability = buyFoodAction.canAfford(player);
+            if (!affordability.canAfford) {
+                return { available: false, reason: `Need at least £${affordability.minCost}` };
+            }
         }
 
         return { available: true };

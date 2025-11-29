@@ -22,7 +22,7 @@ class ShelterLocation extends BaseLocation {
         };
     }
 
-    isActionAvailable(action, timeManager) {
+    isActionAvailable(action, timeManager, player = null) {
         if (!this.actions[action]) {
             return { available: false, reason: `Can't ${action} here` };
         }

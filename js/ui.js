@@ -108,7 +108,7 @@ class UIManager {
     }
 
     // Render action buttons based on current location and time
-    renderActionButtons() {
+    renderActionButtons(player = null) {
         const location = this.locationManager.getCurrentLocation();
         const actions = location.getActions();
 
@@ -116,7 +116,7 @@ class UIManager {
 
         // Add location-specific action buttons
         actions.forEach(action => {
-            const availability = this.locationManager.isActionAvailable(action);
+            const availability = this.locationManager.isActionAvailable(action, player);
             const button = this.createActionButton(action, availability, location);
             this.elements.actions.appendChild(button);
         });
@@ -220,6 +220,9 @@ class UIManager {
 
     // Render travel button in location area
     renderLocationTravel() {
+        // Store current disabled state before re-creating button
+        const wasDisabled = this.travelButton ? this.travelButton.disabled : false;
+
         // Create travel button
         this.elements.travelButtonContainer.innerHTML = '';
         this.travelButton = document.createElement('button');
@@ -229,6 +232,8 @@ class UIManager {
         if (this.travelMode) {
             this.travelButton.classList.add('cancel-mode');
         }
+        // Restore disabled state
+        this.travelButton.disabled = wasDisabled;
         this.travelButton.onclick = () => this.toggleTravelMenu();
         this.elements.travelButtonContainer.appendChild(this.travelButton);
     }
@@ -464,7 +469,7 @@ class UIManager {
         this.updateStats(player);
         this.updateTime();
         this.updateLocation();
-        this.renderActionButtons();
+        this.renderActionButtons(player);
     }
 
     // Start action animation

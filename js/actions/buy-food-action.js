@@ -84,4 +84,18 @@ class BuyFoodAction extends BaseAction {
             notes: null
         };
     }
+
+    /**
+     * Check if player can afford this action
+     * @param {Player} player - Player to check
+     * @returns {Object} - {canAfford: boolean, minCost: number}
+     */
+    canAfford(player) {
+        const costRange = CONFIG.ACTION_PRESETS.moneyCost[this.config.cost];
+        const minCost = costRange[0];
+        return {
+            canAfford: player.money >= minCost,
+            minCost: minCost
+        };
+    }
 }

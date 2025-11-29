@@ -61,13 +61,22 @@ class LondonCityLocation extends BaseLocation {
         };
     }
 
-    isActionAvailable(action, timeManager) {
+    isActionAvailable(action, timeManager, player = null) {
         if (!this.actions[action]) {
             return { available: false, reason: `Can't ${action} here` };
         }
 
         if (action === 'work' && !timeManager.isTimeBetween(8, 18)) {
             return { available: false, reason: 'Businesses are closed (open 8am-6pm)' };
+        }
+
+        // Check affordability for buy-food action
+        if (action === 'buy-food' && player) {
+            const buyFoodAction = this.actions['buy-food'];
+            const affordability = buyFoodAction.canAfford(player);
+            if (!affordability.canAfford) {
+                return { available: false, reason: `Need at least £${affordability.minCost}` };
+            }
         }
 
         return { available: true };

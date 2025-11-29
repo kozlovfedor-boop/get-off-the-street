@@ -41,9 +41,10 @@ class BaseLocation {
      * Checks if action is available at this location at current time
      * @param {string} action - Action type to check
      * @param {TimeManager} timeManager - Time manager for time-based checks
+     * @param {Player} player - Player for resource checks (optional)
      * @returns {Object} - {available: boolean, reason?: string}
      */
-    isActionAvailable(action, timeManager) {
+    isActionAvailable(action, timeManager, player = null) {
         if (!this.actions[action]) {
             return { available: false, reason: `Can't ${action} here` };
         }
