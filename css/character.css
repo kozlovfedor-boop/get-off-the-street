@@ -142,36 +142,42 @@
     background-image: url('../assets/background/bg-city-park.png');
     background-size: 467px 200px;
     background-repeat: no-repeat;
+    background-position: center;
 }
 
 .character-display[data-location="park-to-shelter"] {
     background-image: url('../assets/background/bg-homeless-shelter.png');
     background-size: 467px 200px;
     background-repeat: no-repeat;
+    background-position: center;
 }
 
 .character-display[data-location="park-to-camden-town"] {
     background-image: url('../assets/background/bg-camden-town.png');
     background-size: 467px 200px;
     background-repeat: no-repeat;
+    background-position: center;
 }
 
 .character-display[data-location="camden-town-to-park"] {
     background-image: url('../assets/background/bg-city-park.png');
     background-size: 467px 200px;
     background-repeat: no-repeat;
+    background-position: center;
 }
 
 .character-display[data-location="camden-town-to-london-city"] {
     background-image: url('../assets/background/bg-london-city.png');
     background-size: 467px 200px;
     background-repeat: no-repeat;
+    background-position: center;
 }
 
 .character-display[data-location="london-city-to-camden-town"] {
     background-image: url('../assets/background/bg-camden-town.png');
     background-size: 467px 200px;
     background-repeat: no-repeat;
+    background-position: center;
 }
 
 /* Origin backgrounds for ::before pseudo-element */
