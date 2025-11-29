@@ -66,7 +66,7 @@
     background-size: 467px 200px;
     background-repeat: no-repeat;
     background-position: center;
-    z-index: 1;
+    z-index: 0;
     pointer-events: none;
 }
 
@@ -122,62 +122,61 @@
 /* Traveling RIGHT: old scrolls left (out), new scrolls left (in) */
 .character-display.traveling-right::before {
     animation: scroll-out-left 1s linear forwards;
+    will-change: background-position;
 }
 
 .character-display.traveling-right {
     animation: scroll-in-from-right 1s linear forwards;
+    will-change: background-position;
 }
 
 /* Traveling LEFT: old scrolls right (out), new scrolls right (in) */
 .character-display.traveling-left::before {
     animation: scroll-out-right 1s linear forwards;
+    will-change: background-position;
 }
 
 .character-display.traveling-left {
     animation: scroll-in-from-left 1s linear forwards;
+    will-change: background-position;
 }
 
 /* Transition states - destination backgrounds */
+/* Note: No background-position set here - animations control positioning */
 .character-display[data-location="shelter-to-park"] {
     background-image: url('../assets/background/bg-city-park.png');
     background-size: 467px 200px;
     background-repeat: no-repeat;
-    background-position: center;
 }
 
 .character-display[data-location="park-to-shelter"] {
     background-image: url('../assets/background/bg-homeless-shelter.png');
     background-size: 467px 200px;
     background-repeat: no-repeat;
-    background-position: center;
 }
 
 .character-display[data-location="park-to-camden-town"] {
     background-image: url('../assets/background/bg-camden-town.png');
     background-size: 467px 200px;
     background-repeat: no-repeat;
-    background-position: center;
 }
 
 .character-display[data-location="camden-town-to-park"] {
     background-image: url('../assets/background/bg-city-park.png');
     background-size: 467px 200px;
     background-repeat: no-repeat;
-    background-position: center;
 }
 
 .character-display[data-location="camden-town-to-london-city"] {
     background-image: url('../assets/background/bg-london-city.png');
     background-size: 467px 200px;
     background-repeat: no-repeat;
-    background-position: center;
 }
 
 .character-display[data-location="london-city-to-camden-town"] {
     background-image: url('../assets/background/bg-camden-town.png');
     background-size: 467px 200px;
     background-repeat: no-repeat;
-    background-position: center;
 }
 
 /* Origin backgrounds for ::before pseudo-element */
