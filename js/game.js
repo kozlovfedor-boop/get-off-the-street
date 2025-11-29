@@ -83,6 +83,7 @@ class Game {
     // Execute travel action with background scrolling animation
     async executeTravelAction(travelAction, result) {
         this.isAnimating = true;
+        this.ui.setTravelButtonEnabled(false);
 
         // Start UI animation
         this.ui.startActionAnimation('traveling', result.timeCost, result.direction);
@@ -133,11 +134,13 @@ class Game {
 
         this.ui.endActionAnimation();
         this.isAnimating = false;
+        this.ui.setTravelButtonEnabled(true);
     }
 
     // Execute action with time and stat updates (hour-by-hour execution)
     async executeAction(action, result) {
         this.isAnimating = true;
+        this.ui.setTravelButtonEnabled(false);
 
         // Handle instant actions (any action with timeCost = 0)
         if (action.isInstant()) {
@@ -145,6 +148,7 @@ class Game {
             this.ui.updateAll(this.player);
             this.ui.addLog(result.message, result.logType, this.player.day, this.timeManager.formatTime());
             this.isAnimating = false;
+            this.ui.setTravelButtonEnabled(true);
             return;
         }
 
@@ -314,6 +318,7 @@ class Game {
         // End animation
         this.ui.endActionAnimation();
         this.isAnimating = false;
+        this.ui.setTravelButtonEnabled(true);
     }
 
     // Advance time and process turn

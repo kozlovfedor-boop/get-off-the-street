@@ -43,6 +43,9 @@ class UIManager {
         this.eventUIActive = false;
         this.currentEventResolver = null;
 
+        // Travel button reference for enable/disable control
+        this.travelButton = null;
+
         // Set up start game button listener
         this.elements.startGameBtn.addEventListener('click', () => this.dismissIntro());
 
@@ -216,15 +219,22 @@ class UIManager {
     renderLocationTravel() {
         // Create travel button
         this.elements.travelButtonContainer.innerHTML = '';
-        const travelButton = document.createElement('button');
+        this.travelButton = document.createElement('button');
         // Toggle button text based on travelMode state
-        travelButton.textContent = this.travelMode ? 'Cancel' : 'Travel';
+        this.travelButton.textContent = this.travelMode ? 'Cancel' : 'Travel';
         // Add cancel-mode class when in travel mode
         if (this.travelMode) {
-            travelButton.classList.add('cancel-mode');
+            this.travelButton.classList.add('cancel-mode');
         }
-        travelButton.onclick = () => this.toggleTravelMenu();
-        this.elements.travelButtonContainer.appendChild(travelButton);
+        this.travelButton.onclick = () => this.toggleTravelMenu();
+        this.elements.travelButtonContainer.appendChild(this.travelButton);
+    }
+
+    // Enable or disable travel button (used during actions/travel)
+    setTravelButtonEnabled(enabled) {
+        if (this.travelButton) {
+            this.travelButton.disabled = !enabled;
+        }
     }
 
     // Toggle travel destinations menu
