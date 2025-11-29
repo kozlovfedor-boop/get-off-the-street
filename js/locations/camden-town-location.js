@@ -53,6 +53,11 @@ class CamdenTownLocation extends BaseLocation {
                         severity: 'low'
                     })
                 ]
+            }),
+            'buy-food': new BuyFoodAction({
+                cost: 'medium',      // £10-20
+                food: 'medium',      // 10-30 hunger
+                timeCost: 1
             })
         };
     }

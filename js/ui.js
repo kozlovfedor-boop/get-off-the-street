@@ -138,7 +138,8 @@ class UIManager {
             'sleep': 'Sleep',
             'steal': 'Steal',
             'panhandle': 'Panhandle',
-            'eat': 'Eat Meal'
+            'eat': 'Eat Meal',
+            'buy-food': 'Buy Food'
         };
         const actionName = actionNames[action] || action;
 
@@ -176,7 +177,9 @@ class UIManager {
 
             // Display icons based on count
             if (moneyIcons > 0) {
-                effects.push('💰'.repeat(moneyIcons));
+                // Use different icon for cost actions (buy-food)
+                const moneyIcon = (action === 'buy-food') ? '💸' : '💰';
+                effects.push(moneyIcon.repeat(moneyIcons));
             }
 
             if (healthIcons > 0) {

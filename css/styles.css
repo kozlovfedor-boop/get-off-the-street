@@ -496,6 +496,14 @@ button.panhandle:hover {
     background: #4a2a5a;
 }
 
+button.buy-food {
+    border-color: #4caf50;
+}
+
+button.buy-food:hover {
+    background: #2a5a2a;
+}
+
 button.eat {
     border-color: #4caf50;
 }

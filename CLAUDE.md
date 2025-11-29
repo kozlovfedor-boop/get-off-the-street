@@ -138,6 +138,7 @@ The codebase follows a **modular class-based architecture** for scalability:
   - `SleepAction` - Config: health (preset), hunger (preset), timeCost
   - `StealAction` - Config: reward (preset), hunger (preset)
   - `EatAction` - Config: food (preset)
+  - `BuyFoodAction` - Config: cost (preset), food (preset), timeCost
 - **Action Factory** (action-factory.js): **DEPRECATED in v2.3** - actions created by locations, not factory
 - **Action Utils** (action-utils.js): Shared utilities (`random()`, `applyStarvation()`)
 

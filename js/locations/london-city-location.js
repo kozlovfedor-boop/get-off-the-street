@@ -46,6 +46,11 @@ class LondonCityLocation extends BaseLocation {
                         severity: 'medium'   // £20-50 fine
                     })
                 ]
+            }),
+            'buy-food': new BuyFoodAction({
+                cost: 'high',          // £20-35
+                food: 'high',          // 20-40 hunger
+                timeCost: 1
             })
         };
     }

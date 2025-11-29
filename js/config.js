@@ -37,7 +37,8 @@ const CONFIG = {
         FOOD: 2,        // Changed from 1.5 to 2
         STEAL: 1,
         PANHANDLE: 3,   // Changed from 2.5 to 3
-        EAT: 0          // Changed from 0.5 to 0 (instant)
+        EAT: 0,         // Changed from 0.5 to 0 (instant)
+        BUY_FOOD: 1     // Quick shopping trip
     },
 
     // Location IDs
@@ -74,6 +75,11 @@ const CONFIG = {
             high: [20, 40],     // Buy food meals
             medium: [10, 30],  // Shelter meals
             low: [5, 15] // Dumpster diving
+        },
+        moneyCost: {
+            low: [5, 10],      // Cheap street food
+            medium: [10, 20],  // Standard meal
+            high: [20, 35]     // Quality restaurant meal
         }
     },
 
