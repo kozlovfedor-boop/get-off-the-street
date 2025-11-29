@@ -4,8 +4,8 @@ class Game {
         this.player = new Player();
         this.timeManager = new TimeManager(CONFIG.INITIAL_HOUR);
         this.locationManager = new LocationService(this.timeManager);
-        this.eventManager = new EventManager(this.locationManager, this.timeManager);
         this.ui = new UIManager(this.locationManager, this.timeManager);
+        this.eventCoordinator = new EventCoordinator(this.ui);
 
         this.gameOver = false;
         this.victory = false;
@@ -59,23 +59,42 @@ class Game {
             return;
         }
 
-        // Set animating flag
+        // Create travel action instance
+        const travelAction = new TravelAction({
+            destinationId: destinationId,
+            timeCost: result.timeCost,
+            path: result.path,
+            direction: result.direction
+        });
+
+        // Execute travel action
+        const actionResult = travelAction.execute(this.player, this.locationManager, this.timeManager);
+
+        // Execute using specialized travel execution
+        await this.executeTravelAction(travelAction, actionResult);
+
+        // Travel complete - NOW update the location
+        this.locationManager.currentLocation = destinationId;
+
+        // Update UI
+        this.ui.updateAll(this.player);
+    }
+
+    // Execute travel action with background scrolling animation
+    async executeTravelAction(travelAction, result) {
         this.isAnimating = true;
 
-        // Calculate total hunger cost for the journey
-        const totalHungerCost = Math.floor(Math.random() * 5) + 3;
-        const hungerPerHour = totalHungerCost / result.timeCost;
-
-        // Start traveling animation with direction
+        // Start UI animation
         this.ui.startActionAnimation('traveling', result.timeCost, result.direction);
 
+        const totalHours = Math.ceil(result.timeCost);
         const perHourDuration = CONFIG.ANIMATION_SPEED;
-        const path = result.path;  // Array of location IDs to pass through
+        const path = result.path;
 
         // Animate through each segment of the path
-        for (let i = 0; i < path.length - 1; i++) {
-            const fromLocation = path[i];
-            const toLocation = path[i + 1];
+        for (let hourIndex = 0; hourIndex < totalHours; hourIndex++) {
+            const fromLocation = path[hourIndex];
+            const toLocation = path[hourIndex + 1];
 
             // Start background scroll animation for this segment
             this.ui.startBackgroundScroll(result.direction, fromLocation, toLocation);
@@ -83,43 +102,35 @@ class Game {
             const startHour = this.timeManager.currentHour;
             const endHour = startHour + 1;
 
-            // Calculate hunger for this segment
-            const hungerThisHour = -Math.round(hungerPerHour);
+            // Get per-hour stats from action
+            const stats = travelAction.calculatePerHourStats(hourIndex);
 
             const targetStats = {
                 money: this.player.money,
                 health: this.player.health,
-                hunger: this.player.hunger + hungerThisHour
+                hunger: this.player.hunger + stats.hungerChange
             };
 
             // Animate this hour/segment
-            await this.animateOneHour(startHour, endHour, perHourDuration, targetStats, false, result.timeCost, i);
+            await this.animateOneHour(startHour, endHour, perHourDuration, targetStats, false, totalHours, hourIndex);
 
             // Stop background scroll
             this.ui.stopBackgroundScroll();
 
             // Clamp stats
-            this.player.health = Math.max(CONFIG.MIN_STAT, Math.min(CONFIG.MAX_HEALTH, this.player.health));
-            this.player.hunger = Math.max(CONFIG.MIN_STAT, Math.min(CONFIG.MAX_HUNGER, this.player.hunger));
+            travelAction.clampStats();
 
-            // Log passing through intermediate locations
-            if (i < path.length - 2) {
-                this.ui.addLog(`Passing through ${this.locationManager.getLocation(toLocation).name}`, 'neutral', this.player.day, this.timeManager.formatTime());
-            }
+            // Generate log message
+            const logInfo = travelAction.generateLogMessage(hourIndex, totalHours, stats);
+            this.ui.addLog(logInfo.message, logInfo.logType, this.player.day, this.timeManager.formatTime());
 
-            // Check for game over during travel
-            const tickResults = this.executeHourTick(i, result.timeCost);
+            // Execute hour tick - NOW WITH EVENT SUPPORT during travel
+            const tickResults = await this.executeHourTick(hourIndex, totalHours, travelAction);
             if (tickResults.gameOver) {
                 break;
             }
         }
 
-        // Travel complete - NOW update the location
-        this.locationManager.currentLocation = result.destinationId;
-        this.ui.addLog(`Arrived at ${result.destination}. Hunger -${totalHungerCost}`, 'neutral', this.player.day, this.timeManager.formatTime());
-
-        // Update UI (this will update background to new location)
-        this.ui.updateAll(this.player);
         this.ui.endActionAnimation();
         this.isAnimating = false;
     }
@@ -174,9 +185,14 @@ class Game {
             const logInfo = action.generateLogMessage(hourIndex, totalHours, stats);
             this.ui.addLog(logInfo.message, logInfo.logType, this.player.day, this.timeManager.formatTime());
 
-            // Execute per-hour game logic
-            const tickResults = this.executeHourTick(hourIndex, totalHours);
-            if (tickResults.gameOver) {
+            // Execute per-hour game logic (including events)
+            const tickResults = await this.executeHourTick(hourIndex, totalHours, action);
+
+            // Check if game ended or action should be stopped
+            if (tickResults.gameOver || tickResults.stopAction) {
+                if (tickResults.stopAction) {
+                    this.ui.addLog('Action stopped early.', 'neutral', this.player.day, this.timeManager.formatTime());
+                }
                 break;
             }
         }
@@ -231,38 +247,50 @@ class Game {
     }
 
     // Execute game logic for each simulated hour during action
-    executeHourTick(hourIndex, totalHours) {
+    async executeHourTick(hourIndex, totalHours, currentAction) {
+        console.log(`[executeHourTick] Hour ${hourIndex + 1}/${totalHours}, action: ${currentAction ? currentAction.constructor.name : 'none'}`);
+
         const results = {
             starvation: null,
             event: null,
-            gameOver: false
+            gameOver: false,
+            stopAction: false
         };
 
         // Apply starvation penalty
-        const starvationResult = ActionUtils.applyStarvation(this.player);
+        const starvationResult = this.player.applyStarvationPenalty();
         if (starvationResult) {
             results.starvation = starvationResult;
             this.ui.addLog(starvationResult.message, starvationResult.logType, this.player.day, this.timeManager.formatTime());
         }
 
-        // DISABLED FOR DEBUGGING: Random events temporarily disabled
-        // Calculate per-hour event probability
-        // Formula: 1 - (1 - totalProbability)^(1/hours)
-        // This distributes 20% total probability across all hours
-        // const totalEventProbability = 0.2;
-        // const perHourProbability = 1 - Math.pow(1 - totalEventProbability, 1 / totalHours);
+        // Evaluate action-specific events
+        if (currentAction) {
+            console.log(`[executeHourTick] Evaluating events for ${currentAction.constructor.name}`);
 
-        // Trigger random event with per-hour probability
-        // if (Math.random() < perHourProbability) {
-        //     const event = this.eventManager.trigger(this.player);
-        //     if (event && event.result) {
-        //         results.event = event;
-        //         this.ui.addLog(`${event.message} ${event.result}`, 'neutral', this.player.day, this.timeManager.formatTime());
-        //     } else if (event && event.id !== 'nothing') {
-        //         results.event = event;
-        //         this.ui.addLog(event.message, 'neutral', this.player.day, this.timeManager.formatTime());
-        //     }
-        // }
+            // Use EventCoordinator
+            const context = {
+                player: this.player,
+                locationManager: this.locationManager,
+                timeManager: this.timeManager
+            };
+
+            const eventResult = await this.eventCoordinator.evaluateAndHandleEvents(
+                currentAction,
+                hourIndex,
+                totalHours,
+                context
+            );
+
+            if (eventResult) {
+                results.event = eventResult;
+                this.ui.addLog(eventResult.message, eventResult.logType, this.player.day, this.timeManager.formatTime());
+
+                if (eventResult.stopAction) {
+                    results.stopAction = true;
+                }
+            }
+        }
 
         // Check win/lose conditions
         this.checkGameState();
@@ -300,20 +328,12 @@ class Game {
         }
 
         // Apply starvation penalty
-        const starvationResult = ActionUtils.applyStarvation(this.player);
+        const starvationResult = this.player.applyStarvationPenalty();
         if (starvationResult) {
             this.ui.addLog(starvationResult.message, starvationResult.logType, this.player.day, this.timeManager.formatTime());
         }
 
-        // Trigger random event (20% chance per action)
-        if (Math.random() < 0.2) {
-            const event = this.eventManager.trigger(this.player);
-            if (event && event.result) {
-                this.ui.addLog(`${event.message} ${event.result}`, 'neutral', this.player.day, this.timeManager.formatTime());
-            } else if (event && event.id !== 'nothing') {
-                this.ui.addLog(event.message, 'neutral', this.player.day, this.timeManager.formatTime());
-            }
-        }
+        // Events now handled during action execution via executeHourTick()
 
         // Check win/lose conditions
         this.checkGameState();

@@ -78,7 +78,7 @@ class LocationService {
 
         return {
             path: path,           // Array of location IDs to pass through
-            totalTime: distance * 0.5,  // 0.5 hour per hop (updated from 1)
+            totalTime: distance * 1.0,  // 1.0 hour per hop
             hops: distance,       // Number of location changes
             direction: toIndex > fromIndex ? 'right' : 'left'  // Travel direction
         };

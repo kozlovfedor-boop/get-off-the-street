@@ -680,6 +680,24 @@ button.travel-dest small {
     justify-content: center;
     height: 100%;
     grid-column: 1 / -1; /* Span across both columns */
+    transition: border-color 0.3s ease;
+}
+
+/* Event state variants - add colored left border */
+.action-progress.event-positive {
+    border-left: 4px solid #4ecb71;
+}
+
+.action-progress.event-negative {
+    border-left: 4px solid #ff6b6b;
+}
+
+.action-progress.event-neutral {
+    border-left: 4px solid #ffa500;
+}
+
+.action-progress.event-info {
+    border-left: 4px solid #64b5f6;
 }
 
 .action-message {
@@ -710,6 +728,115 @@ button.travel-dest small {
 .action-time-remaining {
     font-size: 1em;
     color: #888;
+}
+
+/* ============================================
+   INLINE EVENT UI
+   ============================================ */
+
+/* Event title within action progress */
+.action-progress .event-title {
+    font-size: 1.3em;
+    font-weight: bold;
+    margin-bottom: 15px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Event type color coding for titles */
+.action-progress.event-positive .event-title {
+    color: #4ecb71;
+}
+
+.action-progress.event-negative .event-title {
+    color: #ff6b6b;
+}
+
+.action-progress.event-neutral .event-title {
+    color: #ffa500;
+}
+
+.action-progress.event-info .event-title {
+    color: #64b5f6;
+}
+
+/* Event content container */
+.event-inline-content {
+    margin-bottom: 20px;
+}
+
+.event-description {
+    font-size: 1em;
+    color: #e0e0e0;
+    line-height: 1.5;
+    margin-bottom: 20px;
+}
+
+/* Event choice buttons container */
+.event-inline-choices {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Individual choice button */
+.event-choice {
+    padding: 12px 16px;
+    font-size: 1em;
+    font-weight: bold;
+    border: 2px solid #555;
+    border-radius: 5px;
+    background: #3a3a3a;
+    color: #e0e0e0;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Courier New', monospace;
+    text-align: left;
+}
+
+.event-choice:hover {
+    background: #4a4a4a;
+    border-color: #777;
+    transform: translateY(-2px);
+}
+
+.event-choice:active {
+    transform: translateY(0);
+}
+
+/* Variant-specific button styles */
+.event-choice.safe {
+    border-color: #4ecb71;
+}
+
+.event-choice.safe:hover {
+    background: #2a5a3a;
+    border-color: #4ecb71;
+}
+
+.event-choice.danger {
+    border-color: #ff6b6b;
+}
+
+.event-choice.danger:hover {
+    background: #5a2a2a;
+    border-color: #ff6b6b;
+}
+
+/* Default choice (neutral) */
+.event-choice:not(.safe):not(.danger) {
+    border-color: #64b5f6;
+}
+
+.event-choice:not(.safe):not(.danger):hover {
+    background: #2a3a5a;
+    border-color: #64b5f6;
+}
+
+/* Hide progress bar and time remaining during event */
+.action-progress.showing-event .action-progress-container,
+.action-progress.showing-event .action-time-remaining {
+    display: none;
 }
 
 /* === MOBILE RESPONSIVE LAYOUT === */
@@ -762,6 +889,20 @@ button.travel-dest small {
         gap: 10px;
     }
 
+    /* Inline event mobile responsive */
+    .event-description {
+        font-size: 0.95em;
+    }
+
+    .event-choice {
+        padding: 10px 14px;
+        font-size: 0.95em;
+    }
+
+    .action-progress .event-title {
+        font-size: 1.2em;
+    }
+
     /* Responsive header */
     .header h1 {
         font-size: 1.8em;
@@ -771,3 +912,4 @@ button.travel-dest small {
         font-size: 0.9em;
     }
 }
+

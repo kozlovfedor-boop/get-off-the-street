@@ -8,19 +8,17 @@ class ShelterLocation extends BaseLocation {
             'sleep': new SleepAction({
                 health: 'high',      // 30-50 recovery
                 hunger: 'medium',    // -15 to -8
-                timeCost: 7,
-                safe: true,          // No robbery risk
-                risk: 0
+                timeCost: 7
             }),
             'eat': new EatAction({
-                food: 'high'         // 40-60 hunger
+                food: 'medium'         // 40-60 hunger
             })
         };
     }
 
     getTravelTime() {
         return {
-            'park': 0.5
+            'park': 1.0
         };
     }
 

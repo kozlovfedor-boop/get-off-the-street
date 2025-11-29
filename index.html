@@ -117,9 +117,25 @@
     <script src="js/locations/london-city-location.js"></script>
     <script src="js/locations/location-factory.js"></script>
     <script src="js/location-service.js"></script>
-    <script src="js/events.js"></script>
-    <script src="js/actions/action-utils.js"></script>
+    <!-- Event class hierarchy -->
+    <script src="js/events/base-event.js"></script>
+    <script src="js/events/event-utils.js"></script>
+    <!-- Positive events -->
+    <script src="js/events/positive/find-money-event.js"></script>
+    <script src="js/events/positive/generous-stranger-event.js"></script>
+    <script src="js/events/positive/bonus-tip-event.js"></script>
+    <script src="js/events/positive/free-resource-event.js"></script>
+    <!-- Negative events -->
+    <script src="js/events/negative/robbery-event.js"></script>
+    <script src="js/events/negative/police-event.js"></script>
+    <script src="js/events/negative/sickness-event.js"></script>
+    <script src="js/events/negative/weather-event.js"></script>
+    <!-- Work events -->
+    <script src="js/events/work/work-accident-event.js"></script>
+    <!-- Sleep events -->
+    <script src="js/events/sleep/nightmare-event.js"></script>
     <script src="js/actions/base-action.js"></script>
+    <script src="js/actions/travel-action.js"></script>
     <script src="js/actions/work-action.js"></script>
     <script src="js/actions/panhandle-action.js"></script>
     <script src="js/actions/find-food-action.js"></script>
@@ -128,6 +144,7 @@
     <script src="js/actions/eat-action.js"></script>
     <script src="js/character-animation.js"></script>
     <script src="js/ui.js"></script>
+    <script src="js/event-coordinator.js"></script>
     <script src="js/game.js"></script>
     <script src="js/monitor.js"></script>
 </body>

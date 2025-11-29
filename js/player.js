@@ -30,6 +30,19 @@ class Player {
         this.clampStats();
     }
 
+    // Apply starvation penalty if starving
+    applyStarvationPenalty() {
+        if (this.hunger < CONFIG.STARVATION_THRESHOLD) {
+            const healthLoss = Math.floor(Math.random() * (12 - 5 + 1)) + 5;
+            this.modifyHealth(-healthLoss);
+            return {
+                message: `You're starving! Health -${healthLoss}.`,
+                logType: 'negative'
+            };
+        }
+        return null;
+    }
+
     // Advance day
     nextDay() {
         this.day++;

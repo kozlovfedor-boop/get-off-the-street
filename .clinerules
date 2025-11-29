@@ -1,0 +1,6 @@
+- Always ask before running tests
+- Always ask before committing to git
+- Always ask before pushing to GitHub
+- Use compact responses for simple bug fixes
+- Only create detailed plans for complex features
+- Default to showing code changes for review first

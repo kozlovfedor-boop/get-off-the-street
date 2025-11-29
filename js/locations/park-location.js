@@ -9,36 +9,47 @@ class ParkLocation extends BaseLocation {
                 health: 'medium',    // 15-30 recovery
                 hunger: 'low',       // -10 to -5
                 timeCost: 3,
-                safe: false,
-                risk: 0.25,          // 25% robbery at night (5% day)
-                robberyAmount: [10, 30]
+                events: [
+                    new RobberyEvent({
+                        chance: 'medium',    // 8% per hour
+                        severity: 'medium'   // £20-50 loss
+                    }),
+                    new NightmareEvent({
+                        chance: 'low',       // 3% per hour
+                        severity: 'low'      // -10 to -5 health
+                    }),
+                    new WeatherEvent({
+                        chance: 'medium',    // 8% per hour
+                        severity: 'low'
+                    })
+                ]
             }),
             'panhandle': new PanhandleAction({
                 earnings: 'low',     // £5-20
-                hunger: 'low'        // -10 to -5
+                hunger: 'low',       // -10 to -5
+                events: [
+                    new FindMoneyEvent({
+                        chance: 'low',       // 3% per hour
+                        amount: 'low'        // £5-20
+                    })
+                ]
             }),
             'food': new FindFoodAction({
-                food: 'medium'       // 20-45 hunger
+                food: 'low'
             })
         };
     }
 
     getTravelTime() {
         return {
-            'shelter': 0.5,
-            'camden-town': 0.5
+            'shelter': 1.0,
+            'camden-town': 1.0
         };
     }
 
     isActionAvailable(action, timeManager) {
         if (!this.actions[action]) {
             return { available: false, reason: `Can't ${action} here` };
-        }
-
-        // Adjust sleep risk based on time
-        if (action === 'sleep') {
-            const sleepAction = this.actions[action];
-            sleepAction.config.risk = timeManager.isNighttime() ? 0.25 : 0.05;
         }
 
         return { available: true };

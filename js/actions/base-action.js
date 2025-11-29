@@ -53,17 +53,54 @@ class BaseAction {
         return Math.floor(Math.random() * (max - min + 1)) + min;
     }
 
+    // Calculate risk level dynamically from negative events
+    calculateRiskLevel() {
+        if (!this.config.events || this.config.events.length === 0) {
+            return 'none';
+        }
+
+        // Get all negative events (events that cause damage/loss)
+        const negativeEvents = this.config.events.filter(event => {
+            // Check if event is negative based on class name
+            const className = event.constructor.name;
+            return className.includes('Police') ||
+                   className.includes('Robbery') ||
+                   className.includes('Accident') ||
+                   className.includes('Sickness') ||
+                   className.includes('Weather');
+        });
+
+        if (negativeEvents.length === 0) {
+            return 'none';
+        }
+
+        // Calculate combined chance (1 - probability of no event)
+        let noEventProbability = 1.0;
+        for (const event of negativeEvents) {
+            const chance = event.getChance();
+            noEventProbability *= (1 - chance);
+        }
+        const combinedChance = 1 - noEventProbability;
+
+        // Map combined chance to risk level
+        if (combinedChance >= 0.25) return 'high';    // 25%+ risk
+        if (combinedChance >= 0.10) return 'medium';  // 10-25% risk
+        if (combinedChance > 0) return 'low';         // <10% risk
+        return 'none';
+    }
+
     // Instance method to get preview info for UI
     // Override in subclasses to provide specific ranges based on config
     getPreview() {
         return {
             timeCost: 0,
             effects: {
-                money: [0, 0],
-                health: [0, 0],
-                hunger: [0, 0]
+                money: 'none',
+                health: 'none',
+                hunger: 'none',
+                risk: 'none'
             },
-            notes: null // Optional: "varies by location", "if successful", etc.
+            notes: null
         };
     }
 }

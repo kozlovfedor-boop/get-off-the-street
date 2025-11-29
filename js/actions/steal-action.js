@@ -3,9 +3,9 @@ class StealAction extends BaseAction {
     constructor(config = {}) {
         super(config);
         this.config = {
-            risk: config.risk !== undefined ? config.risk : 'medium',
             reward: config.reward || 'high',
-            hunger: config.hunger || 'low'
+            hunger: config.hunger || 'low',
+            events: config.events || []  // Preserve events array
         };
     }
 
@@ -15,31 +15,21 @@ class StealAction extends BaseAction {
         this.timeManager = timeManager;
 
         // Get preset values
-        const policeRisk = typeof this.config.risk === 'string'
-            ? CONFIG.ACTION_PRESETS.risk[this.config.risk]
-            : this.config.risk;
         const rewardRange = CONFIG.ACTION_PRESETS.reward[this.config.reward];
         const hungerRange = CONFIG.ACTION_PRESETS.hunger[this.config.hunger];
 
-        const caughtByPolice = Math.random() < policeRisk;
-
+        // Base steal attempt (70% success rate)
+        // Police catch logic now handled by PoliceEvent
+        const success = Math.random() > 0.3; // 70% success rate
         let message, moneyChange = 0, healthChange = 0;
 
-        if (caughtByPolice) {
-            healthChange = -25;
-            const fine = Math.min(this.random(20, 50), this.player.money);
-            moneyChange = -fine;
-            message = `You got caught by police! Lost £${fine} and got beaten. Health -25.`;
+        if (success) {
+            const stolen = this.random(...rewardRange);
+            moneyChange = stolen;
+            message = `You successfully stole £${stolen}!`;
         } else {
-            const success = Math.random() > 0.3; // 70% success if no police
-            if (success) {
-                const stolen = this.random(...rewardRange);
-                moneyChange = stolen;
-                message = `You successfully stole £${stolen}!`;
-            } else {
-                healthChange = -15;
-                message = "You got caught by someone and got beaten up. Health -15.";
-            }
+            healthChange = -15;
+            message = "You got caught by someone and got beaten up. Health -15.";
         }
 
         const hungerCost = this.random(...hungerRange);
@@ -47,7 +37,7 @@ class StealAction extends BaseAction {
         return {
             type: 'steal',
             message: message,
-            logType: caughtByPolice || healthChange < 0 ? 'negative' : 'positive',
+            logType: healthChange < 0 ? 'negative' : 'positive',
             timeCost: CONFIG.TIME_COSTS.STEAL,
             statChanges: {
                 money: moneyChange,
@@ -83,22 +73,15 @@ class StealAction extends BaseAction {
     }
 
     getPreview() {
-        const rewardRange = CONFIG.ACTION_PRESETS.reward[this.config.reward];
-        const hungerRange = CONFIG.ACTION_PRESETS.hunger[this.config.hunger];
-        const policeRisk = typeof this.config.risk === 'string'
-            ? CONFIG.ACTION_PRESETS.risk[this.config.risk]
-            : this.config.risk;
-
-        const riskPercent = Math.round(policeRisk * 100);
-
         return {
             timeCost: CONFIG.TIME_COSTS.STEAL,
             effects: {
-                money: [-50, rewardRange[1]], // Caught fine or successful steal
-                health: [-25, 0],  // Caught by police or someone
-                hunger: hungerRange
+                money: this.config.reward,
+                health: 'none',
+                hunger: 'none',
+                risk: this.calculateRiskLevel()  // Dynamic calculation from events
             },
-            notes: `${riskPercent}% police risk`
+            notes: null
         };
     }
 }

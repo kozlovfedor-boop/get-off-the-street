@@ -6,33 +6,61 @@ class CamdenTownLocation extends BaseLocation {
         // Create pre-configured action instances
         this.actions = {
             'work': new WorkAction({
-                earnings: 'medium',  // £20-40
-                hunger: 'medium'     // -15 to -8
+                earnings: 'low',     // £20-40
+                hunger: 'medium',    // -15 to -8
+                events: [
+                    new WorkAccidentEvent({
+                        chance: 'low',       // 3% per hour
+                        severity: 'low'      // -10 to -5 health
+                    }),
+                    new BonusTipEvent({
+                        chance: 'low',       // 3% per hour
+                        bonus: 'low'         // £5-20
+                    })
+                ]
             }),
             'panhandle': new PanhandleAction({
                 earnings: 'low',     // £5-20
-                hunger: 'low'        // -10 to -5
+                hunger: 'low',       // -10 to -5
+                events: [
+                    new FreeResourceEvent({
+                        chance: 'low',       // 3% per hour
+                        amount: 'low'        // +5-15 hunger
+                    })
+                ]
             }),
             'steal': new StealAction({
-                risk: 'medium',      // 15% police
-                reward: 'high',      // £50-100
-                hunger: 'low'        // -10 to -5
+                reward: 'medium',    // £30-60
+                hunger: 'low',       // -10 to -5
+                events: [
+                    new PoliceEvent({
+                        chance: 'medium',    // 15% police encounter
+                        severity: 'low'      // £5-20 fine
+                    })
+                ]
             }),
             'sleep': new SleepAction({
                 health: 'low',       // 6-10 recovery
                 hunger: 'low',       // -10 to -5
                 timeCost: 2,
-                safe: false,
-                risk: 0.17,          // 17% robbery at night (7% day)
-                robberyAmount: [15, 40]
+                events: [
+                    new RobberyEvent({
+                        chance: 'low',       // 3% per hour
+                        severity: 'low'      // £5-20 loss
+                    }),
+                    new WeatherEvent({
+                        chance: 'low',       // 3% per hour
+                        severity: 'low'
+                    })
+                ]
             })
         };
     }
 
     getTravelTime() {
         return {
-            'park': 0.5,
-            'london-city': 0.5
+            'park': 1.0,
+            'london-city': 1.0
         };
     }
 
@@ -43,12 +71,6 @@ class CamdenTownLocation extends BaseLocation {
 
         if (action === 'work' && !timeManager.isTimeBetween(6, 22)) {
             return { available: false, reason: 'Factories are closed (open 6am-10pm)' };
-        }
-
-        // Adjust sleep risk based on time
-        if (action === 'sleep') {
-            const sleepAction = this.actions[action];
-            sleepAction.config.risk = timeManager.isNighttime() ? 0.17 : 0.07;
         }
 
         return { available: true };

@@ -1,3 +1,12 @@
+// Helper function to map preset levels to icon counts
+function getIconCount(presetLevel) {
+    if (!presetLevel || presetLevel === 'none') return 0;
+    if (presetLevel === 'low') return 1;
+    if (presetLevel === 'medium') return 2;
+    if (presetLevel === 'high') return 3;
+    return 0;
+}
+
 // UI Manager - handles all DOM updates
 class UIManager {
     constructor(locationManager, timeManager) {
@@ -29,6 +38,10 @@ class UIManager {
         this.logEntries = [];
         this.travelMode = false;
         this.gameStarted = false;
+
+        // Event UI state (inline, no separate modal)
+        this.eventUIActive = false;
+        this.currentEventResolver = null;
 
         // Set up start game button listener
         this.elements.startGameBtn.addEventListener('click', () => this.dismissIntro());
@@ -152,58 +165,27 @@ class UIManager {
 
             const effects = [];
 
-            // Calculate rewards (positive effects)
-            const moneyReward = Math.max(0, preview.effects.money[1]); // Take max value for reward
-            const healthReward = Math.max(0, preview.effects.health[1]);
+            // Get icon counts from preset levels (low=1, medium=2, high=3)
+            const moneyIcons = getIconCount(preview.effects.money);
+            const healthIcons = getIconCount(preview.effects.health);
+            const hungerIcons = getIconCount(preview.effects.hunger);
+            const riskIcons = getIconCount(preview.effects.risk);
 
-            // Calculate risks (negative effects)
-            const moneyRisk = Math.abs(Math.min(0, preview.effects.money[0])); // Take min value for risk
-            const healthRisk = Math.abs(Math.min(0, preview.effects.health[0]));
-            const totalRisk = Math.max(moneyRisk, healthRisk); // Combined risk
-
-            // Money reward icons (3-tier: 0-25, 26-50, 51+)
-            if (moneyReward > 0) {
-                if (moneyReward <= 25) {
-                    effects.push('💰');
-                } else if (moneyReward <= 50) {
-                    effects.push('💰💰');
-                } else {
-                    effects.push('💰💰💰');
-                }
+            // Display icons based on count
+            if (moneyIcons > 0) {
+                effects.push('💰'.repeat(moneyIcons));
             }
 
-            // Health reward icons (3-tier: 1-15, 16-30, 31+)
-            if (healthReward > 0) {
-                if (healthReward <= 15) {
-                    effects.push('❤️');
-                } else if (healthReward <= 30) {
-                    effects.push('❤️❤️');
-                } else {
-                    effects.push('❤️❤️❤️');
-                }
+            if (healthIcons > 0) {
+                effects.push('❤️'.repeat(healthIcons));
             }
 
-            // Hunger reward icons (3-tier: 1-15, 16-30, 31+)
-            const hungerReward = Math.max(0, preview.effects.hunger[1]);
-            if (hungerReward > 0) {
-                if (hungerReward <= 15) {
-                    effects.push('🍞');
-                } else if (hungerReward <= 30) {
-                    effects.push('🍞🍞');
-                } else {
-                    effects.push('🍞🍞🍞');
-                }
+            if (hungerIcons > 0) {
+                effects.push('🍞'.repeat(hungerIcons));
             }
 
-            // Risk icons (3-tier: 1-15, 16-30, 31+)
-            if (totalRisk > 0) {
-                if (totalRisk <= 15) {
-                    effects.push('💀');
-                } else if (totalRisk <= 30) {
-                    effects.push('💀💀');
-                } else {
-                    effects.push('💀💀💀');
-                }
+            if (riskIcons > 0) {
+                effects.push('💀'.repeat(riskIcons));
             }
 
             effectsLine.textContent = effects.join('  ');
@@ -489,7 +471,7 @@ class UIManager {
 
         // Replace action buttons with progress UI
         this.elements.actions.innerHTML = `
-            <div class="action-progress">
+            <div class="action-progress" data-action-message="${message}">
                 <div class="action-message" id="action-message">${message}</div>
                 <div class="action-progress-container">
                     <div class="action-progress-bar" id="action-progress-bar"></div>
@@ -661,5 +643,93 @@ class UIManager {
 
             requestAnimationFrame(animate);
         });
+    }
+
+    /**
+     * Show event modal and pause action
+     * Returns a promise that resolves with the user's choice
+     * @param {Object} modalContent - { title, description, choices }
+     * @returns {Promise<string>} - Resolves with choice value
+     */
+    showInlineEvent(modalContent, eventType = 'neutral') {
+        return new Promise((resolve) => {
+            this.currentEventResolver = resolve;
+            this.eventUIActive = true;
+
+            const actionProgress = document.querySelector('.action-progress');
+            if (!actionProgress) {
+                console.error('Action progress container not found');
+                resolve('continue');
+                return;
+            }
+
+            // Add event state classes
+            actionProgress.classList.add(`event-${eventType}`, 'showing-event');
+
+            // Replace progress UI with event UI
+            actionProgress.innerHTML = `
+                <div class="event-title">${modalContent.title}</div>
+                <div class="event-inline-content">
+                    <div class="event-description">${modalContent.description}</div>
+                </div>
+                <div class="event-inline-choices" id="event-inline-choices">
+                </div>
+            `;
+
+            // Create choice buttons
+            const choicesContainer = document.getElementById('event-inline-choices');
+            modalContent.choices.forEach((choice) => {
+                const button = document.createElement('button');
+                button.textContent = choice.label;
+                button.className = 'event-choice';
+
+                if (choice.variant) {
+                    button.classList.add(choice.variant);
+                }
+
+                button.onclick = () => {
+                    this.hideInlineEvent();
+                    resolve(choice.value);
+                };
+
+                choicesContainer.appendChild(button);
+            });
+        });
+    }
+
+    /**
+     * Hide inline event and restore action progress UI
+     */
+    hideInlineEvent() {
+        this.eventUIActive = false;
+        this.currentEventResolver = null;
+
+        const actionProgress = document.querySelector('.action-progress');
+        if (!actionProgress) return;
+
+        // Remove event state classes
+        actionProgress.classList.remove(
+            'event-positive',
+            'event-negative',
+            'event-neutral',
+            'event-info',
+            'showing-event'
+        );
+
+        // Restore action progress UI
+        const actionMessage = actionProgress.dataset.actionMessage || 'Performing action...';
+
+        actionProgress.innerHTML = `
+            <div class="action-message" id="action-message">${actionMessage}</div>
+            <div class="action-progress-container">
+                <div class="action-progress-bar" id="action-progress-bar"></div>
+            </div>
+            <div class="action-time-remaining" id="action-time-remaining">Resuming...</div>
+        `;
+
+        // Update element references
+        this.elements.actionMessage = document.getElementById('action-message');
+        this.elements.actionProgressBar = document.getElementById('action-progress-bar');
+        this.elements.actionTimeRemaining = document.getElementById('action-time-remaining');
     }
 }

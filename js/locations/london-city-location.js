@@ -6,24 +6,53 @@ class LondonCityLocation extends BaseLocation {
         // Create pre-configured action instances
         this.actions = {
             'work': new WorkAction({
-                earnings: 'high',    // £30-60
-                hunger: 'high'       // -25 to -10
+                earnings: 'medium',    // £30-60
+                hunger: 'high',        // -25 to -10
+                events: [
+                    new WorkAccidentEvent({
+                        chance: 'low',         // 3% per hour
+                        severity: 'medium'     // -20 to -10 health
+                    }),
+                    new BonusTipEvent({
+                        chance: 'medium',      // 8% per hour
+                        bonus: 'medium'        // £20-50
+                    }),
+                    new SicknessEvent({
+                        chance: 'low',         // 3% per hour
+                        severity: 'low'        // -10 to -5 health
+                    })
+                ]
             }),
             'panhandle': new PanhandleAction({
-                earnings: 'high',    // £30-60 (better in rich area)
-                hunger: 'low'        // -10 to -5
+                earnings: 'medium',    // £30-60 (better in rich area)
+                hunger: 'low',         // -10 to -5
+                events: [
+                    new GenerousStrangerEvent({
+                        chance: 'low',         // 3% per hour
+                        bonus: 'high'          // £50-100
+                    }),
+                    new FindMoneyEvent({
+                        chance: 'low',         // 3% per hour
+                        amount: 'medium'       // £20-50
+                    })
+                ]
             }),
             'steal': new StealAction({
-                risk: 'high',        // 30% police
-                reward: 'high',      // £50-100
-                hunger: 'low'        // -10 to -5
+                reward: 'high',        // £50-100
+                hunger: 'low',         // -10 to -5
+                events: [
+                    new PoliceEvent({
+                        chance: 'high',      // 30% police encounter
+                        severity: 'medium'   // £20-50 fine
+                    })
+                ]
             })
         };
     }
 
     getTravelTime() {
         return {
-            'camden-town': 0.5
+            'camden-town': 1.0
         };
     }
 

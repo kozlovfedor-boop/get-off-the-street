@@ -4,7 +4,8 @@ class PanhandleAction extends BaseAction {
         super(config);
         this.config = {
             earnings: config.earnings || 'low',
-            hunger: config.hunger || 'low'
+            hunger: config.hunger || 'low',
+            events: config.events || []  // Preserve events array
         };
     }
 
@@ -59,15 +60,13 @@ class PanhandleAction extends BaseAction {
     }
 
     getPreview() {
-        const earningsRange = CONFIG.ACTION_PRESETS.earnings[this.config.earnings];
-        const hungerRange = CONFIG.ACTION_PRESETS.hunger[this.config.hunger];
-
         return {
             timeCost: CONFIG.TIME_COSTS.PANHANDLE,
             effects: {
-                money: earningsRange,
-                health: [0, 0],
-                hunger: hungerRange
+                money: this.config.earnings,
+                health: 'none',
+                hunger: 'none',
+                risk: this.calculateRiskLevel()  // Dynamic calculation from events
             },
             notes: null
         };

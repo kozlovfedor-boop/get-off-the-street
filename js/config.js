@@ -65,20 +65,61 @@ const CONFIG = {
             medium: [-15, -8],
             low: [-10, -5]
         },
-        risk: {
-            high: 0.30,         // 30% chance
-            medium: 0.15,
-            low: 0.05
-        },
         reward: {
             high: [50, 100],    // Steal rewards
             medium: [30, 60],
             low: [10, 30]
         },
         food: {
-            high: [40, 60],     // Shelter meals
-            medium: [20, 45],   // Dumpster diving
-            low: [10, 25]
+            high: [20, 40],     // Buy food meals
+            medium: [10, 30],  // Shelter meals
+            low: [5, 15] // Dumpster diving
+        }
+    },
+
+    // Event effect presets (high/medium/low)
+    EVENT_PRESETS: {
+        // Money effects
+        moneyGain: {
+            high: [50, 100],    // Lucky find, generous donation
+            medium: [20, 50],   // Find money, tips
+            low: [5, 20]        // Pocket change
+        },
+        moneyLoss: {
+            high: [50, 100],    // Major robbery
+            medium: [20, 50],   // Pickpocket
+            low: [5, 20]        // Petty theft
+        },
+
+        // Health effects
+        healthImpact: {
+            high: [-30, -15],   // Serious injury/illness
+            medium: [-20, -10], // Minor injury
+            low: [-10, -5]      // Mild sickness
+        },
+        healthGain: {
+            high: [20, 30],     // Good recovery
+            medium: [10, 20],   // Minor boost
+            low: [5, 10]        // Small gain
+        },
+
+        // Hunger effects
+        hungerImpact: {
+            high: [-20, -10],   // Food stolen
+            medium: [-10, -5],  // Minor loss
+            low: [-5, -2]       // Negligible
+        },
+        hungerGain: {
+            high: [30, 50],     // Free meal
+            medium: [15, 30],   // Snack
+            low: [5, 15]        // Small food
+        },
+
+        // Event probability (per-hour base chance)
+        eventChance: {
+            high: 0.15,         // 15% per hour
+            medium: 0.08,       // 8% per hour
+            low: 0.03           // 3% per hour
         }
     }
 };

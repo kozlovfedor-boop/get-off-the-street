@@ -135,8 +135,8 @@ The codebase follows a **modular class-based architecture** for scalability:
   - `WorkAction` - Config: earnings (preset), hunger (preset)
   - `PanhandleAction` - Config: earnings (preset), hunger (preset)
   - `FindFoodAction` - Config: food (preset)
-  - `SleepAction` - Config: health (preset), hunger (preset), timeCost, safe (bool), risk, robberyAmount
-  - `StealAction` - Config: risk (preset or number), reward (preset), hunger (preset)
+  - `SleepAction` - Config: health (preset), hunger (preset), timeCost
+  - `StealAction` - Config: reward (preset), hunger (preset)
   - `EatAction` - Config: food (preset)
 - **Action Factory** (action-factory.js): **DEPRECATED in v2.3** - actions created by locations, not factory
 - **Action Utils** (action-utils.js): Shared utilities (`random()`, `applyStarvation()`)
@@ -495,18 +495,99 @@ BaseAction (Abstract)
 
 5. **Update travel times** in adjacent locations to include the new location
 
-**Adding new events:**
-```javascript
-game.eventManager.addEvent({
-    id: 'new-event',
-    message: "Something happened!",
-    effect: (player) => {
-        player.modifyHealth(-10);
-        return "-10 health";
-    },
-    chance: 0.1
-});
-```
+**Adding new events (UPDATED for v2.4.0):**
+
+Events are now class-based and owned by actions. To add a new event:
+
+1. **Create event class** in appropriate `js/events/` subdirectory (e.g., `js/events/positive/lucky-find-event.js`):
+   ```javascript
+   class LuckyFindEvent extends BaseEvent {
+       constructor(config = {}) {
+           super(config);
+           this.config = {
+               chance: config.chance || 'low',
+               amount: config.amount || 'medium'
+           };
+           this.foundAmount = 0;
+       }
+
+       canTrigger(context) {
+           // Define when event can occur
+           return !this.isAtLocation('shelter');
+       }
+
+       execute(context) {
+           this.player = context.player;
+           const amountRange = this.getPresetRange('moneyGain', this.config.amount);
+           this.foundAmount = this.random(...amountRange);
+
+           return {
+               type: 'lucky-find',
+               message: `You found something valuable!`,
+               logType: 'positive',
+               statChanges: {
+                   money: this.foundAmount,
+                   health: 0,
+                   hunger: 0
+               }
+           };
+       }
+
+       getModalContent() {
+           return {
+               title: 'Lucky Find!',
+               description: `You found £${this.foundAmount}!`,
+               choices: [
+                   {
+                       label: 'Continue',
+                       value: 'continue',
+                       variant: 'safe'
+                   },
+                   {
+                       label: 'Stop',
+                       value: 'stop'
+                   }
+               ]
+           };
+       }
+
+       processChoice(choice, context) {
+           this.player = context.player;
+           this.applyStats(this.foundAmount, 0, 0);
+
+           if (choice === 'stop') {
+               return {
+                   message: `Found £${this.foundAmount} and stopped.`,
+                   logType: 'positive',
+                   stopAction: true
+               };
+           }
+
+           return {
+               message: `Found £${this.foundAmount} and continued.`,
+               logType: 'positive',
+               stopAction: false
+           };
+       }
+   }
+   ```
+
+2. **Add script tag** to `index.html` (in appropriate event section):
+   ```html
+   <script src="js/events/positive/lucky-find-event.js"></script>
+   ```
+
+3. **Assign to action** in location constructor:
+   ```javascript
+   // In park-location.js
+   'panhandle': new PanhandleAction({
+       earnings: 'low',
+       hunger: 'low',
+       events: [
+           new LuckyFindEvent({ chance: 'low', amount: 'medium' })
+       ]
+   })
+   ```
 
 **Modifying time costs:**
 - Update `CONFIG.TIME_COSTS` in config.js
@@ -533,7 +614,7 @@ Action ranges (in action class files):
 - Steal: 30% police (London), 15% police (Camden), then 70% success for £50-100
 
 Location travel times (defined in location class `getTravelTime()` methods):
-- Adjacent locations: 0.5 hours per hop
+- Adjacent locations: 1.0 hour per hop
 - Path calculation handled by LocationService
 
 Event probabilities in `events.js`:
@@ -678,6 +759,23 @@ Full details: See `docs/desktop-testing-guide.md`
 
 ## Version History
 
+- **v2.4.0**: Interactive Event System (Class-Based Architecture)
+  - **Class-based event architecture** following v2.3.0 preset-based patterns
+  - Added `EVENT_PRESETS` in config.js for standardized event effects (high/medium/low)
+  - Events extend `BaseEvent` abstract class with common utilities
+  - Actions own event instances configured in location constructors
+  - **Event modal system** - all events pause action and show interactive modal
+  - **Pick-one-randomly probability model** - weighted event selection per hour
+  - **Stop-action functionality** - player choices can cancel remaining action hours
+  - Implemented 9 core events:
+    - Positive: FindMoneyEvent, GenerousStrangerEvent, BonusTipEvent, FreeResourceEvent
+    - Negative: RobberyEvent, SicknessEvent, WeatherEvent
+    - Work-specific: WorkAccidentEvent
+    - Sleep-specific: NightmareEvent
+  - Event assignment to actions across all locations (Park, London City, Camden Town)
+  - Event filtering by location, time, and action type via `canTrigger()`
+  - Modal UI with animations, choice buttons, and pause/resume flow
+  - **Benefits**: Contextual storytelling, player agency, dramatic gameplay moments
 - **v2.3.0**: Location-Owned Pre-Configured Actions (Architectural Refactor)
   - **Major architectural refactor** to eliminate duplication and circular dependencies
   - Added `ACTION_PRESETS` in config.js for standardized effect levels (high/medium/low)

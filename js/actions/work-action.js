@@ -4,7 +4,8 @@ class WorkAction extends BaseAction {
         super(config);
         this.config = {
             earnings: config.earnings || 'medium',
-            hunger: config.hunger || 'medium'
+            hunger: config.hunger || 'medium',
+            events: config.events || []  // Preserve events array
         };
         this.totalEarnings = 0;
     }
@@ -84,15 +85,13 @@ class WorkAction extends BaseAction {
     }
 
     getPreview() {
-        const earningsRange = CONFIG.ACTION_PRESETS.earnings[this.config.earnings];
-        const hungerRange = CONFIG.ACTION_PRESETS.hunger[this.config.hunger];
-
         return {
             timeCost: CONFIG.TIME_COSTS.WORK,
             effects: {
-                money: earningsRange,
-                health: [0, 0],
-                hunger: hungerRange
+                money: this.config.earnings,
+                health: 'none',
+                hunger: 'none',
+                risk: this.calculateRiskLevel()  // Dynamic calculation from events
             },
             notes: null
         };

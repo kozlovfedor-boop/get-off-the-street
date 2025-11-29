@@ -3,7 +3,8 @@ class EatAction extends BaseAction {
     constructor(config = {}) {
         super(config);
         this.config = {
-            food: config.food || 'high'
+            food: config.food || 'high',
+            events: config.events || []  // Preserve events array
         };
     }
 
@@ -35,14 +36,13 @@ class EatAction extends BaseAction {
     }
 
     getPreview() {
-        const foodRange = CONFIG.ACTION_PRESETS.food[this.config.food];
-
         return {
             timeCost: 0, // Instant
             effects: {
-                money: [0, 0],
-                health: [0, 0],
-                hunger: foodRange
+                money: 'none',
+                health: 'none',
+                hunger: this.config.food,
+                risk: this.calculateRiskLevel()  // Dynamic calculation from events
             },
             notes: null
         };
