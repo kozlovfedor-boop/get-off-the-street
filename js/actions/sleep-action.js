@@ -8,6 +8,7 @@ class SleepAction extends BaseAction {
             timeCost: config.timeCost || 7,
             events: config.events || []  // Preserve events array
         };
+        this.xpReward = config.xpReward || CONFIG.XP_REWARDS.sleep;
     }
 
     execute(player, locationManager, timeManager) {
@@ -15,14 +16,17 @@ class SleepAction extends BaseAction {
         this.locationManager = locationManager;
         this.timeManager = timeManager;
 
-        // Get preset ranges
-        const healthRange = CONFIG.ACTION_PRESETS.health[this.config.health];
-        const hungerRange = CONFIG.ACTION_PRESETS.hunger[this.config.hunger];
+        // Get base preset ranges
+        const baseHealthRange = CONFIG.ACTION_PRESETS.health[this.config.health];
+        const baseHungerRange = CONFIG.ACTION_PRESETS.hunger[this.config.hunger];
 
-        const healthGain = this.random(...healthRange);
-        const hungerCost = this.random(...hungerRange);
+        // Apply level bonuses
+        const bonusHealthRange = this.applyLevelBonus(baseHealthRange, 'health');
+        const bonusHungerRange = this.applyLevelBonus(baseHungerRange, 'hunger');
 
-        // Robbery logic now handled by RobberyEvent
+        const healthGain = this.random(...bonusHealthRange);
+        const hungerCost = this.random(...bonusHungerRange);
+
         const displayMessage = `You slept for ${this.config.timeCost} hours. Health +${healthGain}, Hunger ${hungerCost}.`;
 
         return {
@@ -35,19 +39,24 @@ class SleepAction extends BaseAction {
                 health: healthGain,
                 hunger: hungerCost
             },
-            perHourCalculation: 'sleep'
+            perHourCalculation: 'sleep',
+            xpReward: this.xpReward
         };
     }
 
     calculatePerHourStats(hourIndex) {
-        const healthRange = CONFIG.ACTION_PRESETS.health[this.config.health];
-        const hungerRange = CONFIG.ACTION_PRESETS.hunger[this.config.hunger];
+        const baseHealthRange = CONFIG.ACTION_PRESETS.health[this.config.health];
+        const baseHungerRange = CONFIG.ACTION_PRESETS.hunger[this.config.hunger];
+
+        // Apply level bonuses
+        const bonusHealthRange = this.applyLevelBonus(baseHealthRange, 'health');
+        const bonusHungerRange = this.applyLevelBonus(baseHungerRange, 'hunger');
 
         // Per-hour recovery rates
-        const perHourHealthMin = Math.floor(healthRange[0] / this.config.timeCost);
-        const perHourHealthMax = Math.ceil(healthRange[1] / this.config.timeCost);
-        const perHourHungerMin = Math.floor(hungerRange[0] / this.config.timeCost);
-        const perHourHungerMax = Math.ceil(hungerRange[1] / this.config.timeCost);
+        const perHourHealthMin = Math.floor(bonusHealthRange[0] / this.config.timeCost);
+        const perHourHealthMax = Math.ceil(bonusHealthRange[1] / this.config.timeCost);
+        const perHourHungerMin = Math.floor(bonusHungerRange[0] / this.config.timeCost);
+        const perHourHungerMax = Math.ceil(bonusHungerRange[1] / this.config.timeCost);
 
         return {
             moneyChange: 0,

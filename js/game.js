@@ -309,6 +309,19 @@ class Game {
     completeAction(result, startStats) {
         // Final summary log removed - per-hour logs provide all details
 
+        // Award XP if action provides it
+        if (result.xpReward && result.xpReward > 0) {
+            const levelsGained = this.player.addExperience(result.xpReward);
+
+            // Log XP gain
+            this.ui.addLog(`+${result.xpReward} XP earned`, 'positive', this.player.day, this.timeManager.formatTime());
+
+            // Handle level up if occurred
+            if (levelsGained > 0) {
+                this.handleLevelUp(levelsGained);
+            }
+        }
+
         // Ensure final game state check (in case last hour tick triggered end condition)
         this.checkGameState();
 
@@ -319,6 +332,29 @@ class Game {
         this.ui.endActionAnimation();
         this.isAnimating = false;
         this.ui.setTravelButtonEnabled(true);
+    }
+
+    // Handle level up with modal notification
+    handleLevelUp(levelsGained) {
+        const newLevel = this.player.level;
+        const bonuses = CONFIG.LEVEL_SYSTEM.BONUS_PER_LEVEL;
+
+        // Calculate bonus percentages
+        const earningsBonus = Math.round(bonuses.earnings * 100);
+        const healthBonus = Math.round(bonuses.health * 100);
+        const hungerBonus = Math.round(bonuses.hunger * 100);
+        const riskBonus = Math.round(bonuses.risk * 100);
+
+        // Show modal with level up information
+        this.ui.showLevelUpModal(newLevel, {
+            earnings: earningsBonus,
+            health: healthBonus,
+            hunger: hungerBonus,
+            risk: riskBonus
+        });
+
+        // Log level up
+        this.ui.addLog(`Level Up! Now level ${newLevel}`, 'positive', this.player.day, this.timeManager.formatTime());
     }
 
     // Advance time and process turn

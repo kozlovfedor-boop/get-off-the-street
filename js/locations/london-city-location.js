@@ -8,6 +8,7 @@ class LondonCityLocation extends BaseLocation {
             'work': new WorkAction({
                 earnings: 'medium',    // £30-60
                 hunger: 'high',        // -25 to -10
+                xpReward: CONFIG.XP_REWARDS.work,
                 events: [
                     new WorkAccidentEvent({
                         chance: 'low',         // 3% per hour
@@ -26,6 +27,7 @@ class LondonCityLocation extends BaseLocation {
             'panhandle': new PanhandleAction({
                 earnings: 'medium',    // £30-60 (better in rich area)
                 hunger: 'low',         // -10 to -5
+                xpReward: CONFIG.XP_REWARDS.panhandle,
                 events: [
                     new GenerousStrangerEvent({
                         chance: 'low',         // 3% per hour
@@ -40,17 +42,23 @@ class LondonCityLocation extends BaseLocation {
             'steal': new StealAction({
                 reward: 'high',        // £50-100
                 hunger: 'low',         // -10 to -5
+                xpReward: CONFIG.XP_REWARDS.steal,
                 events: [
                     new PoliceEvent({
-                        chance: 'high',      // 30% police encounter
+                        chance: 'high',      // 15% police encounter
                         severity: 'medium'   // £20-50 fine
+                    }),
+                    new BeatenUpEvent({
+                        chance: 'high',      // 15% beaten up
+                        severity: 'high'     // -30 to -15 health
                     })
                 ]
             }),
             'buy-food': new BuyFoodAction({
                 cost: 'high',          // £20-35
                 food: 'high',          // 20-40 hunger
-                timeCost: 1
+                timeCost: 1,
+                xpReward: CONFIG.XP_REWARDS.buy_food
             })
         };
     }

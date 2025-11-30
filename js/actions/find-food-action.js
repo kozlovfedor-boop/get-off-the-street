@@ -6,6 +6,7 @@ class FindFoodAction extends BaseAction {
             food: config.food || 'medium',
             events: config.events || []  // Preserve events array
         };
+        this.xpReward = config.xpReward || CONFIG.XP_REWARDS.food;
     }
 
     execute(player, locationManager, timeManager) {
@@ -27,7 +28,8 @@ class FindFoodAction extends BaseAction {
                 health: 0,
                 hunger: foodAmount
             },
-            perHourCalculation: 'findFood'
+            perHourCalculation: 'findFood',
+            xpReward: this.xpReward
         };
     }
 

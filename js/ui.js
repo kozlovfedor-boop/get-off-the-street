@@ -20,6 +20,9 @@ class UIManager {
             healthBar: document.getElementById('health-bar'),
             hungerValue: document.getElementById('hunger-value'),
             hungerBar: document.getElementById('hunger-bar'),
+            level: document.getElementById('level'),
+            xpValue: document.getElementById('xp-value'),
+            xpBar: document.getElementById('xp-bar'),
             day: document.getElementById('day'),
             time: document.getElementById('time'),
             timePeriod: document.getElementById('time-period'),
@@ -84,6 +87,13 @@ class UIManager {
         } else {
             hungerBarParent.classList.remove('critical');
         }
+
+        // Update level and XP
+        this.elements.level.textContent = player.level;
+        const xpNeeded = player.getXPForNextLevel();
+        this.elements.xpValue.textContent = `${Math.floor(player.experience)} / ${xpNeeded}`;
+        const xpProgress = (player.experience / xpNeeded) * 100;
+        this.elements.xpBar.style.width = `${xpProgress}%`;
 
         // Update day
         this.elements.day.textContent = player.day;
@@ -749,5 +759,51 @@ class UIManager {
         this.elements.actionMessage = document.getElementById('action-message');
         this.elements.actionProgressBar = document.getElementById('action-progress-bar');
         this.elements.actionTimeRemaining = document.getElementById('action-time-remaining');
+    }
+
+    /**
+     * Show level up modal with bonuses
+     * @param {number} newLevel - The new level reached
+     * @param {Object} bonuses - Bonus percentages {earnings, health, hunger, risk}
+     */
+    showLevelUpModal(newLevel, bonuses) {
+        return new Promise((resolve) => {
+            // Create modal overlay
+            const modalOverlay = document.createElement('div');
+            modalOverlay.className = 'modal-overlay';
+            modalOverlay.innerHTML = `
+                <div class="modal level-up-modal">
+                    <div class="modal-header">
+                        <h2>🎉 LEVEL UP! 🎉</h2>
+                    </div>
+                    <div class="modal-body">
+                        <div class="level-display">
+                            <span class="new-level">Level ${newLevel}</span>
+                        </div>
+                        <div class="bonuses-section">
+                            <h3>New Bonuses:</h3>
+                            <ul class="bonuses-list">
+                                <li>+${bonuses.earnings}% Earnings</li>
+                                <li>+${bonuses.health}% Health Recovery</li>
+                                <li>+${bonuses.hunger}% Hunger Efficiency</li>
+                                <li>-${bonuses.risk}% Risk</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="modal-button continue-button" id="level-up-continue">Continue</button>
+                    </div>
+                </div>
+            `;
+
+            // Add to body
+            document.body.appendChild(modalOverlay);
+
+            // Add continue button handler
+            document.getElementById('level-up-continue').onclick = () => {
+                document.body.removeChild(modalOverlay);
+                resolve();
+            };
+        });
     }
 }

@@ -8,6 +8,7 @@ class BuyFoodAction extends BaseAction {
             timeCost: config.timeCost || CONFIG.TIME_COSTS.BUY_FOOD,
             events: config.events || []
         };
+        this.xpReward = config.xpReward || CONFIG.XP_REWARDS.buy_food;
     }
 
     execute(player, locationManager, timeManager) {
@@ -34,7 +35,8 @@ class BuyFoodAction extends BaseAction {
                     health: 0,
                     hunger: 0
                 },
-                perHourCalculation: 'instant'
+                perHourCalculation: 'instant',
+                xpReward: 0
             };
         }
 
@@ -49,7 +51,8 @@ class BuyFoodAction extends BaseAction {
                 health: 0,
                 hunger: hungerGain
             },
-            perHourCalculation: 'buyFood'
+            perHourCalculation: 'buyFood',
+            xpReward: this.xpReward
         };
     }
 

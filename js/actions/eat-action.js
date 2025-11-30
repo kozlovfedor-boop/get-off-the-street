@@ -6,6 +6,7 @@ class EatAction extends BaseAction {
             food: config.food || 'high',
             events: config.events || []  // Preserve events array
         };
+        this.xpReward = config.xpReward || CONFIG.XP_REWARDS.eat;
     }
 
     execute(player, locationManager, timeManager) {
@@ -27,7 +28,8 @@ class EatAction extends BaseAction {
                 health: 0,
                 hunger: foodAmount
             },
-            perHourCalculation: 'instant'
+            perHourCalculation: 'instant',
+            xpReward: this.xpReward
         };
     }
 

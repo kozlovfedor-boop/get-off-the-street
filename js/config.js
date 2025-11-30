@@ -10,7 +10,9 @@ const CONFIG = {
         money: 0,
         health: 100,
         hunger: 50,
-        day: 1
+        day: 1,
+        level: 1,
+        experience: 0
     },
 
     // Initial time and location
@@ -127,6 +129,32 @@ const CONFIG = {
             medium: 0.08,       // 8% per hour
             low: 0.03           // 3% per hour
         }
+    },
+
+    // Level system configuration
+    LEVEL_SYSTEM: {
+        MAX_LEVEL: 10,
+        BASE_XP_FOR_LEVEL: 150,      // XP needed for level 1→2
+        XP_MULTIPLIER: 1.4,          // Each level requires 40% more XP (medium progression)
+
+        // Bonus per level (multiplicative)
+        BONUS_PER_LEVEL: {
+            earnings: 0.05,   // +5% per level (Level 5 = 20% bonus, Level 10 = 45% bonus)
+            health: 0.05,     // +5% health recovery per level
+            hunger: 0.05,     // +5% hunger efficiency (less hunger cost)
+            risk: 0.03        // -3% risk per level (Level 5 = -12% risk, Level 10 = -27% risk)
+        }
+    },
+
+    // XP rewards per action type (end-of-action awards)
+    XP_REWARDS: {
+        work: 25,          // Productive labor
+        panhandle: 15,     // Survival skill
+        steal: 35,         // High-risk, high-reward
+        sleep: 5,          // Minimal (rest/recovery)
+        food: 8,           // Resourcefulness
+        eat: 0,            // No XP (instant action)
+        buy_food: 0        // No XP (simple transaction)
     }
 };
 

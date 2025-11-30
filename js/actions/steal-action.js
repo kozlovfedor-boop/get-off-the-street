@@ -7,6 +7,7 @@ class StealAction extends BaseAction {
             hunger: config.hunger || 'low',
             events: config.events || []  // Preserve events array
         };
+        this.xpReward = config.xpReward || CONFIG.XP_REWARDS.steal;
     }
 
     execute(player, locationManager, timeManager) {
@@ -14,37 +15,36 @@ class StealAction extends BaseAction {
         this.locationManager = locationManager;
         this.timeManager = timeManager;
 
-        // Get preset values
-        const rewardRange = CONFIG.ACTION_PRESETS.reward[this.config.reward];
-        const hungerRange = CONFIG.ACTION_PRESETS.hunger[this.config.hunger];
+        // Get base preset values
+        const baseRewardRange = CONFIG.ACTION_PRESETS.reward[this.config.reward];
+        const baseHungerRange = CONFIG.ACTION_PRESETS.hunger[this.config.hunger];
 
-        // Base steal attempt (70% success rate)
-        // Police catch logic now handled by PoliceEvent
-        const success = Math.random() > 0.3; // 70% success rate
-        let message, moneyChange = 0, healthChange = 0;
+        // Apply level bonuses
+        const bonusRewardRange = this.applyLevelBonus(baseRewardRange, 'earnings');
+        const bonusHungerRange = this.applyLevelBonus(baseHungerRange, 'hunger');
 
-        if (success) {
-            const stolen = this.random(...rewardRange);
-            moneyChange = stolen;
-            message = `You successfully stole £${stolen}!`;
-        } else {
-            healthChange = -15;
-            message = "You got caught by someone and got beaten up. Health -15.";
-        }
+        // Always succeed when action executes
+        // Failure logic now handled by BeatenUpEvent and PoliceEvent
+        const stolen = this.random(...bonusRewardRange);
+        const message = `You successfully stole £${stolen}!`;
+        const moneyChange = stolen;
+        const healthChange = 0;
+        const xpReward = this.xpReward;
 
-        const hungerCost = this.random(...hungerRange);
+        const hungerCost = this.random(...bonusHungerRange);
 
         return {
             type: 'steal',
             message: message,
-            logType: healthChange < 0 ? 'negative' : 'positive',
+            logType: 'positive',
             timeCost: CONFIG.TIME_COSTS.STEAL,
             statChanges: {
                 money: moneyChange,
                 health: healthChange,
                 hunger: hungerCost
             },
-            perHourCalculation: 'steal'
+            perHourCalculation: 'steal',
+            xpReward: xpReward
         };
     }
 

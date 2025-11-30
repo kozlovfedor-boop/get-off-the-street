@@ -49,6 +49,23 @@
                             <div class="progress-bar-fill hunger-fill" id="hunger-bar" style="width: 50%"></div>
                         </div>
                     </div>
+
+                    <div class="stat-level">
+                        <div class="stat-label">LEVEL</div>
+                        <div class="stat-value">
+                            <span id="level">1</span>
+                        </div>
+                    </div>
+
+                    <div class="stat-bar xp-bar">
+                        <div class="stat-bar-label">
+                            <span>EXPERIENCE</span>
+                            <span class="stat-bar-value" id="xp-value">0 / 150</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-bar-fill xp-fill" id="xp-bar" style="width: 0%"></div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Center Column: Game Area -->
@@ -128,6 +145,7 @@
     <!-- Negative events -->
     <script src="js/events/negative/robbery-event.js"></script>
     <script src="js/events/negative/police-event.js"></script>
+    <script src="js/events/negative/beaten-up-event.js"></script>
     <script src="js/events/negative/sickness-event.js"></script>
     <script src="js/events/negative/weather-event.js"></script>
     <!-- Work events -->

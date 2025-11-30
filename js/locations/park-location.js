@@ -9,6 +9,7 @@ class ParkLocation extends BaseLocation {
                 health: 'medium',    // 15-30 recovery
                 hunger: 'low',       // -10 to -5
                 timeCost: 3,
+                xpReward: CONFIG.XP_REWARDS.sleep,
                 events: [
                     new RobberyEvent({
                         chance: 'medium',    // 8% per hour
@@ -27,6 +28,7 @@ class ParkLocation extends BaseLocation {
             'panhandle': new PanhandleAction({
                 earnings: 'low',     // £5-20
                 hunger: 'low',       // -10 to -5
+                xpReward: CONFIG.XP_REWARDS.panhandle,
                 events: [
                     new FindMoneyEvent({
                         chance: 'low',       // 3% per hour
@@ -35,7 +37,8 @@ class ParkLocation extends BaseLocation {
                 ]
             }),
             'food': new FindFoodAction({
-                food: 'low'
+                food: 'low',
+                xpReward: CONFIG.XP_REWARDS.food
             })
         };
     }

@@ -7,6 +7,7 @@ class WorkAction extends BaseAction {
             hunger: config.hunger || 'medium',
             events: config.events || []  // Preserve events array
         };
+        this.xpReward = config.xpReward || CONFIG.XP_REWARDS.work;
         this.totalEarnings = 0;
     }
 
@@ -15,12 +16,16 @@ class WorkAction extends BaseAction {
         this.locationManager = locationManager;
         this.timeManager = timeManager;
 
-        // Get preset ranges
-        const earningsRange = CONFIG.ACTION_PRESETS.earnings[this.config.earnings];
-        const hungerRange = CONFIG.ACTION_PRESETS.hunger[this.config.hunger];
+        // Get base preset ranges
+        const baseEarningsRange = CONFIG.ACTION_PRESETS.earnings[this.config.earnings];
+        const baseHungerRange = CONFIG.ACTION_PRESETS.hunger[this.config.hunger];
 
-        const earnings = this.random(...earningsRange);
-        const hungerCost = this.random(...hungerRange);
+        // Apply level bonuses
+        const bonusEarningsRange = this.applyLevelBonus(baseEarningsRange, 'earnings');
+        const bonusHungerRange = this.applyLevelBonus(baseHungerRange, 'hunger');
+
+        const earnings = this.random(...bonusEarningsRange);
+        const hungerCost = this.random(...bonusHungerRange);
 
         const location = this.locationManager.getCurrentLocation();
         return {
@@ -33,23 +38,28 @@ class WorkAction extends BaseAction {
                 health: 0,
                 hunger: hungerCost
             },
-            perHourCalculation: 'work'
+            perHourCalculation: 'work',
+            xpReward: this.xpReward
         };
     }
 
     calculatePerHourStats(hourIndex) {
-        const earningsRange = CONFIG.ACTION_PRESETS.earnings[this.config.earnings];
-        const hungerRange = CONFIG.ACTION_PRESETS.hunger[this.config.hunger];
+        const baseEarningsRange = CONFIG.ACTION_PRESETS.earnings[this.config.earnings];
+        const baseHungerRange = CONFIG.ACTION_PRESETS.hunger[this.config.hunger];
+
+        // Apply level bonuses
+        const bonusEarningsRange = this.applyLevelBonus(baseEarningsRange, 'earnings');
+        const bonusHungerRange = this.applyLevelBonus(baseHungerRange, 'hunger');
 
         // Per-hour earnings (roughly total / 7)
-        const perHourMin = Math.floor(earningsRange[0] / 7);
-        const perHourMax = Math.ceil(earningsRange[1] / 7);
+        const perHourMin = Math.floor(bonusEarningsRange[0] / 7);
+        const perHourMax = Math.ceil(bonusEarningsRange[1] / 7);
         const earnings = this.random(perHourMin, perHourMax);
         this.totalEarnings += earnings;
 
         // Per-hour hunger cost
-        const perHourHungerMin = Math.floor(hungerRange[0] / 7);
-        const perHourHungerMax = Math.ceil(hungerRange[1] / 7);
+        const perHourHungerMin = Math.floor(bonusHungerRange[0] / 7);
+        const perHourHungerMax = Math.ceil(bonusHungerRange[1] / 7);
 
         return {
             moneyChange: 0, // Don't show money yet

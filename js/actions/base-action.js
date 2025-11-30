@@ -6,6 +6,8 @@ class BaseAction {
         this.player = null;
         this.locationManager = null;
         this.timeManager = null;
+        // XP configuration
+        this.xpReward = config.xpReward || 0;
     }
 
     // Each action implements these
@@ -51,6 +53,30 @@ class BaseAction {
     // Utility
     random(min, max) {
         return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    // XP system methods
+    getXPReward() {
+        return this.xpReward;
+    }
+
+    // Apply level bonuses to a stat range
+    applyLevelBonus(range, bonusType) {
+        if (!this.player) return range;
+
+        const bonus = this.player.getLevelBonus(bonusType);
+        return [
+            Math.floor(range[0] * bonus),
+            Math.ceil(range[1] * bonus)
+        ];
+    }
+
+    // Apply level-based risk reduction
+    applyRiskReduction(baseRisk) {
+        if (!this.player) return baseRisk;
+
+        const reduction = this.player.getRiskReduction();
+        return Math.max(0.01, baseRisk - reduction); // Min 1% risk
     }
 
     // Calculate risk level dynamically from negative events

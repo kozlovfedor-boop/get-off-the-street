@@ -8,10 +8,12 @@ class ShelterLocation extends BaseLocation {
             'sleep': new SleepAction({
                 health: 'high',      // 30-50 recovery
                 hunger: 'medium',    // -15 to -8
-                timeCost: 7
+                timeCost: 7,
+                xpReward: CONFIG.XP_REWARDS.sleep
             }),
             'eat': new EatAction({
-                food: 'medium'         // 40-60 hunger
+                food: 'medium',         // 40-60 hunger
+                xpReward: CONFIG.XP_REWARDS.eat
             })
         };
     }

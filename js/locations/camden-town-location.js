@@ -8,6 +8,7 @@ class CamdenTownLocation extends BaseLocation {
             'work': new WorkAction({
                 earnings: 'low',     // £20-40
                 hunger: 'medium',    // -15 to -8
+                xpReward: CONFIG.XP_REWARDS.work,
                 events: [
                     new WorkAccidentEvent({
                         chance: 'low',       // 3% per hour
@@ -22,6 +23,7 @@ class CamdenTownLocation extends BaseLocation {
             'panhandle': new PanhandleAction({
                 earnings: 'low',     // £5-20
                 hunger: 'low',       // -10 to -5
+                xpReward: CONFIG.XP_REWARDS.panhandle,
                 events: [
                     new FreeResourceEvent({
                         chance: 'low',       // 3% per hour
@@ -30,12 +32,17 @@ class CamdenTownLocation extends BaseLocation {
                 ]
             }),
             'steal': new StealAction({
-                reward: 'medium',    // £30-60
+                reward: 'low',    // £10-30
                 hunger: 'low',       // -10 to -5
+                xpReward: CONFIG.XP_REWARDS.steal,
                 events: [
                     new PoliceEvent({
-                        chance: 'medium',    // 15% police encounter
-                        severity: 'low'      // £5-20 fine
+                        chance: 'medium',    // 8% police encounter
+                        severity: 'medium'   // £20-50 fine
+                    }),
+                    new BeatenUpEvent({
+                        chance: 'high',      // 15% beaten up
+                        severity: 'high'     // -30 to -15 health
                     })
                 ]
             }),
@@ -43,6 +50,7 @@ class CamdenTownLocation extends BaseLocation {
                 health: 'low',       // 6-10 recovery
                 hunger: 'low',       // -10 to -5
                 timeCost: 2,
+                xpReward: CONFIG.XP_REWARDS.sleep,
                 events: [
                     new RobberyEvent({
                         chance: 'low',       // 3% per hour
@@ -57,7 +65,8 @@ class CamdenTownLocation extends BaseLocation {
             'buy-food': new BuyFoodAction({
                 cost: 'medium',      // £10-20
                 food: 'medium',      // 10-30 hunger
-                timeCost: 1
+                timeCost: 1,
+                xpReward: CONFIG.XP_REWARDS.buy_food
             })
         };
     }
