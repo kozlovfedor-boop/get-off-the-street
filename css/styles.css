@@ -263,6 +263,104 @@ h1 {
     color: #9c27b0;
 }
 
+/* Reputation Section */
+.reputation-section {
+    margin-top: 20px;
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    border-left: 3px solid #666;
+}
+
+.reputation-header {
+    font-size: 14px;
+    font-weight: bold;
+    color: #666;
+    margin-bottom: 12px;
+    letter-spacing: 1px;
+}
+
+.faction-reputation {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.faction-reputation:last-child {
+    border-bottom: none;
+}
+
+.faction-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.faction-icon {
+    font-size: 18px;
+}
+
+.faction-name {
+    font-size: 13px;
+    color: #ccc;
+}
+
+.faction-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.faction-tier-icon {
+    font-size: 18px;
+}
+
+.faction-tier-text {
+    font-size: 12px;
+    font-weight: bold;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Tier-specific colors */
+.faction-tier-text.hated {
+    color: #ff0000;
+    background: rgba(255, 0, 0, 0.2);
+}
+
+.faction-tier-text.disliked {
+    color: #ff6600;
+    background: rgba(255, 102, 0, 0.2);
+}
+
+.faction-tier-text.neutral {
+    color: #999999;
+    background: rgba(153, 153, 153, 0.2);
+}
+
+.faction-tier-text.respected {
+    color: #00cc00;
+    background: rgba(0, 204, 0, 0.2);
+}
+
+.faction-tier-text.trusted {
+    color: #00ff00;
+    background: rgba(0, 255, 0, 0.2);
+}
+
+/* Reputation change animation */
+@keyframes reputationChange {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+.faction-reputation.changed {
+    animation: reputationChange 0.5s ease;
+}
+
 @keyframes pulse {
     0%, 100% {
         opacity: 1;

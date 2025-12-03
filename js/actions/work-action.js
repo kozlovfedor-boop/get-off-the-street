@@ -5,24 +5,31 @@ class WorkAction extends BaseAction {
         this.config = {
             earnings: config.earnings || 'medium',
             hunger: config.hunger || 'medium',
-            events: config.events || []  // Preserve events array
+            events: config.events || [],  // Preserve events array
+            reputationEffects: config.reputationEffects || {}  // NEW
         };
         this.xpReward = config.xpReward || CONFIG.XP_REWARDS.work;
         this.totalEarnings = 0;
     }
 
-    execute(player, locationManager, timeManager) {
+    execute(player, locationManager, timeManager, reputationManager) {
         this.player = player;
         this.locationManager = locationManager;
         this.timeManager = timeManager;
+        this.reputationManager = reputationManager;  // NEW
 
         // Get base preset ranges
         const baseEarningsRange = CONFIG.ACTION_PRESETS.earnings[this.config.earnings];
         const baseHungerRange = CONFIG.ACTION_PRESETS.hunger[this.config.hunger];
 
         // Apply level bonuses
-        const bonusEarningsRange = this.applyLevelBonus(baseEarningsRange, 'earnings');
+        let bonusEarningsRange = this.applyLevelBonus(baseEarningsRange, 'earnings');
         const bonusHungerRange = this.applyLevelBonus(baseHungerRange, 'hunger');
+
+        // NEW: Apply reputation modifiers to earnings
+        if (this.reputationManager) {
+            bonusEarningsRange = this.applyReputationModifiers('business', bonusEarningsRange, 'earnings');
+        }
 
         const earnings = this.random(...bonusEarningsRange);
         const hungerCost = this.random(...bonusHungerRange);
@@ -48,8 +55,13 @@ class WorkAction extends BaseAction {
         const baseHungerRange = CONFIG.ACTION_PRESETS.hunger[this.config.hunger];
 
         // Apply level bonuses
-        const bonusEarningsRange = this.applyLevelBonus(baseEarningsRange, 'earnings');
+        let bonusEarningsRange = this.applyLevelBonus(baseEarningsRange, 'earnings');
         const bonusHungerRange = this.applyLevelBonus(baseHungerRange, 'hunger');
+
+        // NEW: Apply reputation modifiers to earnings
+        if (this.reputationManager) {
+            bonusEarningsRange = this.applyReputationModifiers('business', bonusEarningsRange, 'earnings');
+        }
 
         // Per-hour earnings (roughly total / 7)
         const perHourMin = Math.floor(bonusEarningsRange[0] / 7);

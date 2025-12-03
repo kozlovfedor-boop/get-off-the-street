@@ -5,15 +5,17 @@ class StealAction extends BaseAction {
         this.config = {
             reward: config.reward || 'high',
             hunger: config.hunger || 'low',
-            events: config.events || []  // Preserve events array
+            events: config.events || [],  // Preserve events array
+            reputationEffects: config.reputationEffects || {}  // NEW
         };
         this.xpReward = config.xpReward || CONFIG.XP_REWARDS.steal;
     }
 
-    execute(player, locationManager, timeManager) {
+    execute(player, locationManager, timeManager, reputationManager) {
         this.player = player;
         this.locationManager = locationManager;
         this.timeManager = timeManager;
+        this.reputationManager = reputationManager;  // NEW
 
         // Get base preset values
         const baseRewardRange = CONFIG.ACTION_PRESETS.reward[this.config.reward];

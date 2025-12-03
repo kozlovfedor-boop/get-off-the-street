@@ -7,16 +7,21 @@ class BaseEvent {
         this.locationManager = null;
         this.timeManager = null;
         this.actionContext = null;
+        this.reputationManager = null;  // NEW
+
+        // NEW: Reputation effects configuration
+        this.reputationEffects = config.reputationEffects || {};
     }
 
     // Abstract methods - must override in subclasses
 
     /**
      * Check if event can trigger in current context
-     * @param {Object} context - { player, locationManager, timeManager, action, hourIndex }
+     * @param {Object} context - { player, locationManager, timeManager, action, hourIndex, reputationManager }
      * @returns {boolean} - true if event can occur
      */
     canTrigger(context) {
+        this.reputationManager = context.reputationManager;  // NEW: Set from context
         throw new Error('Must override canTrigger() in subclass');
     }
 
@@ -153,5 +158,31 @@ class BaseEvent {
     formatStat(amount, statName) {
         const sign = amount >= 0 ? '+' : '';
         return `${sign}${amount} ${statName}`;
+    }
+
+    /**
+     * NEW: Apply reputation changes
+     */
+    applyReputationEffects() {
+        if (!this.reputationManager || !this.reputationEffects) return;
+
+        Object.keys(this.reputationEffects).forEach(factionId => {
+            const effect = this.reputationEffects[factionId];
+            const changeLevel = effect.change; // 'high', 'medium', 'low'
+            const isPositive = effect.positive !== false; // Default true
+
+            const changeAmount = CONFIG.REPUTATION_PRESETS[factionId][changeLevel];
+            const finalChange = isPositive ? changeAmount : -changeAmount;
+
+            this.reputationManager.modifyReputation(factionId, finalChange);
+        });
+    }
+
+    /**
+     * NEW: Check if player meets reputation requirement
+     */
+    meetsReputationRequirement(factionId, requiredTier) {
+        if (!this.reputationManager) return true;
+        return this.reputationManager.canPerformAction(factionId, requiredTier);
     }
 }

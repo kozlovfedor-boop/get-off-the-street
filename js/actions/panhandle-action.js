@@ -5,23 +5,30 @@ class PanhandleAction extends BaseAction {
         this.config = {
             earnings: config.earnings || 'low',
             hunger: config.hunger || 'low',
-            events: config.events || []  // Preserve events array
+            events: config.events || [],  // Preserve events array
+            reputationEffects: config.reputationEffects || {}  // NEW
         };
         this.xpReward = config.xpReward || CONFIG.XP_REWARDS.panhandle;
     }
 
-    execute(player, locationManager, timeManager) {
+    execute(player, locationManager, timeManager, reputationManager) {
         this.player = player;
         this.locationManager = locationManager;
         this.timeManager = timeManager;
+        this.reputationManager = reputationManager;  // NEW
 
         // Get base preset ranges
         const baseEarningsRange = CONFIG.ACTION_PRESETS.earnings[this.config.earnings];
         const baseHungerRange = CONFIG.ACTION_PRESETS.hunger[this.config.hunger];
 
         // Apply level bonuses
-        const bonusEarningsRange = this.applyLevelBonus(baseEarningsRange, 'earnings');
+        let bonusEarningsRange = this.applyLevelBonus(baseEarningsRange, 'earnings');
         const bonusHungerRange = this.applyLevelBonus(baseHungerRange, 'hunger');
+
+        // NEW: Apply reputation modifiers to earnings
+        if (this.reputationManager) {
+            bonusEarningsRange = this.applyReputationModifiers('locals', bonusEarningsRange, 'earnings');
+        }
 
         const earnings = this.random(...bonusEarningsRange);
         const hungerCost = this.random(...bonusHungerRange);
@@ -46,8 +53,13 @@ class PanhandleAction extends BaseAction {
         const baseHungerRange = CONFIG.ACTION_PRESETS.hunger[this.config.hunger];
 
         // Apply level bonuses
-        const bonusEarningsRange = this.applyLevelBonus(baseEarningsRange, 'earnings');
+        let bonusEarningsRange = this.applyLevelBonus(baseEarningsRange, 'earnings');
         const bonusHungerRange = this.applyLevelBonus(baseHungerRange, 'hunger');
+
+        // NEW: Apply reputation modifiers to earnings
+        if (this.reputationManager) {
+            bonusEarningsRange = this.applyReputationModifiers('locals', bonusEarningsRange, 'earnings');
+        }
 
         // Per-hour earnings and hunger cost
         const perHourMin = Math.floor(bonusEarningsRange[0] / CONFIG.TIME_COSTS.PANHANDLE);

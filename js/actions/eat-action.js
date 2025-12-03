@@ -4,15 +4,17 @@ class EatAction extends BaseAction {
         super(config);
         this.config = {
             food: config.food || 'high',
-            events: config.events || []  // Preserve events array
+            events: config.events || [],  // Preserve events array
+            reputationEffects: config.reputationEffects || {}  // NEW
         };
         this.xpReward = config.xpReward || CONFIG.XP_REWARDS.eat;
     }
 
-    execute(player, locationManager, timeManager) {
+    execute(player, locationManager, timeManager, reputationManager) {
         this.player = player;
         this.locationManager = locationManager;
         this.timeManager = timeManager;
+        this.reputationManager = reputationManager;  // NEW
 
         // Get preset range
         const foodRange = CONFIG.ACTION_PRESETS.food[this.config.food];

@@ -9,9 +9,10 @@ function getIconCount(presetLevel) {
 
 // UI Manager - handles all DOM updates
 class UIManager {
-    constructor(locationManager, timeManager) {
+    constructor(locationManager, timeManager, reputationManager) {
         this.locationManager = locationManager;
         this.timeManager = timeManager;
+        this.reputationManager = reputationManager;  // NEW
         this.characterAnimation = new CharacterAnimationManager(locationManager);
 
         this.elements = {
@@ -35,7 +36,17 @@ class UIManager {
             actions: document.getElementById('actions'),
             log: document.getElementById('log'),
             startGameBtn: document.getElementById('start-game'),
-            gameContent: document.getElementById('game-content')
+            gameContent: document.getElementById('game-content'),
+
+            // NEW: Reputation elements
+            repPoliceIcon: document.getElementById('rep-police-icon'),
+            repPoliceTier: document.getElementById('rep-police-tier'),
+            repLocalsIcon: document.getElementById('rep-locals-icon'),
+            repLocalsTier: document.getElementById('rep-locals-tier'),
+            repShelterIcon: document.getElementById('rep-shelter-icon'),
+            repShelterTier: document.getElementById('rep-shelter-tier'),
+            repBusinessIcon: document.getElementById('rep-business-icon'),
+            repBusinessTier: document.getElementById('rep-business-tier')
         };
 
         this.logEntries = [];
@@ -479,7 +490,44 @@ class UIManager {
         this.updateStats(player);
         this.updateTime();
         this.updateLocation();
+        this.updateReputation();  // NEW
         this.renderActionButtons(player);
+    }
+
+    // NEW: Update reputation display
+    updateReputation() {
+        if (!this.reputationManager) return;
+
+        const factions = ['police', 'locals', 'shelter', 'business'];
+
+        factions.forEach(factionId => {
+            const tier = this.reputationManager.getTier(factionId);
+            const iconEl = this.elements[`rep${this.capitalize(factionId)}Icon`];
+            const tierEl = this.elements[`rep${this.capitalize(factionId)}Tier`];
+
+            if (iconEl && tierEl) {
+                // Update icon
+                iconEl.textContent = tier.icon;
+
+                // Update tier text
+                tierEl.textContent = tier.name;
+
+                // Update tier color class
+                tierEl.className = 'faction-tier-text ' + tier.name.toLowerCase();
+
+                // Trigger change animation
+                const factionEl = document.getElementById(`rep-${factionId}`);
+                if (factionEl) {
+                    factionEl.classList.add('changed');
+                    setTimeout(() => factionEl.classList.remove('changed'), 500);
+                }
+            }
+        });
+    }
+
+    // Helper method to capitalize first letter
+    capitalize(str) {
+        return str.charAt(0).toUpperCase() + str.slice(1);
     }
 
     // Start action animation

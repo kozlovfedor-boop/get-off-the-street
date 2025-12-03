@@ -1,10 +1,11 @@
 // Main game controller
 class Game {
     constructor() {
-        this.player = new Player();
+        this.reputationManager = new ReputationManager();  // NEW
+        this.player = new Player(CONFIG.INITIAL_STATS, this.reputationManager);  // NEW: pass manager
         this.timeManager = new TimeManager(CONFIG.INITIAL_HOUR);
         this.locationManager = new LocationService(this.timeManager);
-        this.ui = new UIManager(this.locationManager, this.timeManager);
+        this.ui = new UIManager(this.locationManager, this.timeManager, this.reputationManager);  // NEW: pass manager
         this.eventCoordinator = new EventCoordinator(this.ui);
 
         this.gameOver = false;
@@ -41,8 +42,8 @@ class Game {
             return;
         }
 
-        // Execute action with runtime dependencies
-        const result = action.execute(this.player, this.locationManager, this.timeManager);
+        // Execute action with runtime dependencies (including reputationManager)
+        const result = action.execute(this.player, this.locationManager, this.timeManager, this.reputationManager);
 
         // Execute the action
         await this.executeAction(action, result);
@@ -211,6 +212,12 @@ class Game {
             this.ui.addLog(finalLog.message, finalLog.logType, this.player.day, this.timeManager.formatTime());
         }
 
+        // NEW: Apply reputation effects after action completes
+        if (action.applyReputationEffects) {
+            action.applyReputationEffects();
+            this.ui.updateReputation();  // Update reputation display
+        }
+
         // Animation complete
         this.completeAction(result, startStats);
     }
@@ -276,7 +283,8 @@ class Game {
             const context = {
                 player: this.player,
                 locationManager: this.locationManager,
-                timeManager: this.timeManager
+                timeManager: this.timeManager,
+                reputationManager: this.reputationManager  // NEW
             };
 
             const eventResult = await this.eventCoordinator.evaluateAndHandleEvents(
@@ -289,6 +297,9 @@ class Game {
             if (eventResult) {
                 results.event = eventResult;
                 this.ui.addLog(eventResult.message, eventResult.logType, this.player.day, this.timeManager.formatTime());
+
+                // NEW: Update reputation display after event
+                this.ui.updateReputation();
 
                 if (eventResult.stopAction) {
                     results.stopAction = true;
@@ -397,6 +408,7 @@ class Game {
     // Restart the game
     restart() {
         this.player.reset();
+        this.reputationManager.reset();  // NEW
         this.timeManager.setTime(CONFIG.INITIAL_HOUR);
         this.locationManager.currentLocation = CONFIG.INITIAL_LOCATION;
         this.gameOver = false;

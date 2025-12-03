@@ -13,7 +13,10 @@ class ParkLocation extends BaseLocation {
                 events: [
                     new RobberyEvent({
                         chance: 'medium',    // 8% per hour
-                        severity: 'medium'   // £20-50 loss
+                        severity: 'medium',  // £20-50 loss
+                        reputationEffects: { // NEW: Getting robbed hurts local reputation
+                            locals: { change: 'low', positive: false }  // -3 locals rep
+                        }
                     }),
                     new NightmareEvent({
                         chance: 'low',       // 3% per hour
@@ -29,6 +32,9 @@ class ParkLocation extends BaseLocation {
                 earnings: 'low',     // £5-20
                 hunger: 'low',       // -10 to -5
                 xpReward: CONFIG.XP_REWARDS.panhandle,
+                reputationEffects: {   // NEW: Panhandling builds local reputation
+                    locals: { change: 'low', positive: true }  // +3 locals rep
+                },
                 events: [
                     new FindMoneyEvent({
                         chance: 'low',       // 3% per hour
@@ -53,6 +59,14 @@ class ParkLocation extends BaseLocation {
     isActionAvailable(action, timeManager, player = null) {
         if (!this.actions[action]) {
             return { available: false, reason: `Can't ${action} here` };
+        }
+
+        // NEW: Reputation gating for panhandle - need Neutral+ locals reputation
+        if (action === 'panhandle' && player && player.reputationManager) {
+            const tier = player.reputationManager.getTierName('locals');
+            if (tier === 'Hated') {
+                return { available: false, reason: 'Locals avoid you (very low reputation)' };
+            }
         }
 
         return { available: true };

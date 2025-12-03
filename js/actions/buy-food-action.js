@@ -6,15 +6,17 @@ class BuyFoodAction extends BaseAction {
             cost: config.cost || 'medium',           // Money cost preset
             food: config.food || 'medium',           // Hunger gain preset
             timeCost: config.timeCost || CONFIG.TIME_COSTS.BUY_FOOD,
-            events: config.events || []
+            events: config.events || [],
+            reputationEffects: config.reputationEffects || {}  // NEW
         };
         this.xpReward = config.xpReward || CONFIG.XP_REWARDS.buy_food;
     }
 
-    execute(player, locationManager, timeManager) {
+    execute(player, locationManager, timeManager, reputationManager) {
         this.player = player;
         this.locationManager = locationManager;
         this.timeManager = timeManager;
+        this.reputationManager = reputationManager;  // NEW
 
         // Get preset ranges
         const costRange = CONFIG.ACTION_PRESETS.moneyCost[this.config.cost];

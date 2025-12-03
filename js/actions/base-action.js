@@ -6,13 +6,18 @@ class BaseAction {
         this.player = null;
         this.locationManager = null;
         this.timeManager = null;
+        this.reputationManager = null;  // NEW: Reputation manager
         // XP configuration
         this.xpReward = config.xpReward || 0;
+
+        // NEW: Reputation effects configuration
+        this.reputationEffects = config.reputationEffects || {};
+        // Format: { police: { change: 'medium', positive: false }, locals: { change: 'low', positive: true } }
     }
 
     // Each action implements these
     // Subclasses must accept runtime dependencies as parameters
-    execute(player, locationManager, timeManager) {
+    execute(player, locationManager, timeManager, reputationManager) {
         throw new Error('Must override execute()');
     }
 
@@ -113,6 +118,39 @@ class BaseAction {
         if (combinedChance >= 0.10) return 'medium';  // 10-25% risk
         if (combinedChance > 0) return 'low';         // <10% risk
         return 'none';
+    }
+
+    // NEW: Apply reputation changes after action
+    applyReputationEffects() {
+        if (!this.reputationManager || !this.reputationEffects) return;
+
+        Object.keys(this.reputationEffects).forEach(factionId => {
+            const effect = this.reputationEffects[factionId];
+            const changeLevel = effect.change; // 'high', 'medium', 'low'
+            const isPositive = effect.positive !== false; // Default true
+
+            const changeAmount = CONFIG.REPUTATION_PRESETS[factionId][changeLevel];
+            const finalChange = isPositive ? changeAmount : -changeAmount;
+
+            this.reputationManager.modifyReputation(factionId, finalChange);
+        });
+    }
+
+    // NEW: Apply reputation modifiers to outcomes
+    applyReputationModifiers(factionId, baseValue, modifierType) {
+        if (!this.reputationManager) return baseValue;
+
+        const tier = this.reputationManager.getTier(factionId);
+        const modifier = CONFIG.REPUTATION_SYSTEM.TIER_MODIFIERS[modifierType][tier.name];
+
+        if (Array.isArray(baseValue)) {
+            return [
+                Math.floor(baseValue[0] * modifier),
+                Math.ceil(baseValue[1] * modifier)
+            ];
+        }
+
+        return baseValue * modifier;
     }
 
     // Instance method to get preview info for UI

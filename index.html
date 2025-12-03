@@ -66,6 +66,55 @@
                             <div class="progress-bar-fill xp-fill" id="xp-bar" style="width: 0%"></div>
                         </div>
                     </div>
+
+                    <!-- NEW: Reputation Section -->
+                    <div class="reputation-section">
+                        <div class="reputation-header">REPUTATION</div>
+
+                        <div class="faction-reputation" id="rep-police">
+                            <div class="faction-info">
+                                <span class="faction-icon">👮</span>
+                                <span class="faction-name">Police</span>
+                            </div>
+                            <div class="faction-status">
+                                <span class="faction-tier-icon" id="rep-police-icon">😐</span>
+                                <span class="faction-tier-text" id="rep-police-tier">Neutral</span>
+                            </div>
+                        </div>
+
+                        <div class="faction-reputation" id="rep-locals">
+                            <div class="faction-info">
+                                <span class="faction-icon">👥</span>
+                                <span class="faction-name">Locals</span>
+                            </div>
+                            <div class="faction-status">
+                                <span class="faction-tier-icon" id="rep-locals-icon">😐</span>
+                                <span class="faction-tier-text" id="rep-locals-tier">Neutral</span>
+                            </div>
+                        </div>
+
+                        <div class="faction-reputation" id="rep-shelter">
+                            <div class="faction-info">
+                                <span class="faction-icon">🏠</span>
+                                <span class="faction-name">Shelter</span>
+                            </div>
+                            <div class="faction-status">
+                                <span class="faction-tier-icon" id="rep-shelter-icon">😐</span>
+                                <span class="faction-tier-text" id="rep-shelter-tier">Neutral</span>
+                            </div>
+                        </div>
+
+                        <div class="faction-reputation" id="rep-business">
+                            <div class="faction-info">
+                                <span class="faction-icon">💼</span>
+                                <span class="faction-name">Business</span>
+                            </div>
+                            <div class="faction-status">
+                                <span class="faction-tier-icon" id="rep-business-icon">😐</span>
+                                <span class="faction-tier-text" id="rep-business-tier">Neutral</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Center Column: Game Area -->
@@ -124,6 +173,7 @@
 
     <!-- Load scripts in order -->
     <script src="js/config.js"></script>
+    <script src="js/reputation-manager.js"></script>
     <script src="js/player.js"></script>
     <script src="js/time.js"></script>
     <!-- Location class hierarchy -->

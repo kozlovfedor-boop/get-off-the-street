@@ -1,12 +1,15 @@
 // Player state management
 class Player {
-    constructor(stats = CONFIG.INITIAL_STATS) {
+    constructor(stats = CONFIG.INITIAL_STATS, reputationManager = null) {
         this.money = stats.money;
         this.health = stats.health;
         this.hunger = stats.hunger;
         this.day = stats.day;
         this.level = stats.level;
         this.experience = stats.experience;
+
+        // Reputation manager (injected dependency)
+        this.reputationManager = reputationManager;
     }
 
     // Add money
@@ -115,6 +118,21 @@ class Player {
         return (this.level - 1) * bonusRate;
     }
 
+    // Reputation accessor methods (delegate to ReputationManager)
+    getReputation(factionId) {
+        return this.reputationManager ? this.reputationManager.getReputation(factionId) : 50;
+    }
+
+    modifyReputation(factionId, amount) {
+        if (this.reputationManager) {
+            this.reputationManager.modifyReputation(factionId, amount);
+        }
+    }
+
+    getReputationTier(factionId) {
+        return this.reputationManager ? this.reputationManager.getTier(factionId) : null;
+    }
+
     // Clamp all stats to valid ranges
     clampStats() {
         this.money = Math.max(CONFIG.MIN_STAT, this.money);
@@ -133,6 +151,10 @@ class Player {
         this.day = initial.day;
         this.level = initial.level;
         this.experience = initial.experience;
+
+        if (this.reputationManager) {
+            this.reputationManager.reset();
+        }
     }
 
     // Get current state as object
@@ -143,7 +165,8 @@ class Player {
             hunger: this.hunger,
             day: this.day,
             level: this.level,
-            experience: this.experience
+            experience: this.experience,
+            reputation: this.reputationManager ? this.reputationManager.getState() : null
         };
     }
 }

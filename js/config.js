@@ -12,7 +12,13 @@ const CONFIG = {
         hunger: 50,
         day: 1,
         level: 1,
-        experience: 0
+        experience: 0,
+        reputation: {
+            police: 50,     // Neutral with police
+            locals: 50,     // Neutral with locals
+            shelter: 50,    // Neutral with shelter staff
+            business: 50    // Neutral with business owners
+        }
     },
 
     // Initial time and location
@@ -155,6 +161,75 @@ const CONFIG = {
         food: 8,           // Resourcefulness
         eat: 0,            // No XP (instant action)
         buy_food: 0        // No XP (simple transaction)
+    },
+
+    // Reputation System Configuration
+    REPUTATION_SYSTEM: {
+        // Faction definitions
+        FACTIONS: {
+            police: { id: 'police', name: 'Police', icon: '👮' },
+            locals: { id: 'locals', name: 'Locals', icon: '👥' },
+            shelter: { id: 'shelter', name: 'Shelter Staff', icon: '🏠' },
+            business: { id: 'business', name: 'Business Owners', icon: '💼' }
+        },
+
+        // Reputation tiers (score ranges 0-100)
+        TIERS: [
+            { name: 'Hated', min: 0, max: 20, icon: '💀', color: '#ff0000' },
+            { name: 'Disliked', min: 21, max: 40, icon: '👎', color: '#ff6600' },
+            { name: 'Neutral', min: 41, max: 60, icon: '😐', color: '#999999' },
+            { name: 'Respected', min: 61, max: 80, icon: '👍', color: '#00cc00' },
+            { name: 'Trusted', min: 81, max: 100, icon: '⭐', color: '#00ff00' }
+        ],
+
+        // Outcome modifiers per tier (multipliers)
+        TIER_MODIFIERS: {
+            earnings: {
+                'Hated': 0.5,       // 50% earnings
+                'Disliked': 0.75,   // 75% earnings
+                'Neutral': 1.0,     // 100% earnings
+                'Respected': 1.25,  // 125% earnings
+                'Trusted': 1.5      // 150% earnings
+            },
+            risk: {
+                'Hated': 2.0,       // 2x risk
+                'Disliked': 1.5,    // 1.5x risk
+                'Neutral': 1.0,     // Normal risk
+                'Respected': 0.75,  // 75% risk
+                'Trusted': 0.5      // 50% risk
+            },
+            eventChance: {
+                'Hated': 1.5,       // 1.5x event chance
+                'Disliked': 1.25,   // 1.25x event chance
+                'Neutral': 1.0,     // Normal chance
+                'Respected': 0.75,  // 75% chance
+                'Trusted': 0.5      // 50% chance
+            }
+        }
+    },
+
+    // Reputation effect presets (amount of reputation change)
+    REPUTATION_PRESETS: {
+        police: {
+            high: 15,    // Major impact (+/- 15)
+            medium: 8,   // Moderate impact (+/- 8)
+            low: 3       // Minor impact (+/- 3)
+        },
+        locals: {
+            high: 15,
+            medium: 8,
+            low: 3
+        },
+        shelter: {
+            high: 15,
+            medium: 8,
+            low: 3
+        },
+        business: {
+            high: 15,
+            medium: 8,
+            low: 3
+        }
     }
 };
 

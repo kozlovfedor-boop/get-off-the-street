@@ -6,15 +6,17 @@ class SleepAction extends BaseAction {
             health: config.health || 'medium',
             hunger: config.hunger || 'medium',
             timeCost: config.timeCost || 7,
-            events: config.events || []  // Preserve events array
+            events: config.events || [],  // Preserve events array
+            reputationEffects: config.reputationEffects || {}  // NEW
         };
         this.xpReward = config.xpReward || CONFIG.XP_REWARDS.sleep;
     }
 
-    execute(player, locationManager, timeManager) {
+    execute(player, locationManager, timeManager, reputationManager) {
         this.player = player;
         this.locationManager = locationManager;
         this.timeManager = timeManager;
+        this.reputationManager = reputationManager;  // NEW
 
         // Get base preset ranges
         const baseHealthRange = CONFIG.ACTION_PRESETS.health[this.config.health];
