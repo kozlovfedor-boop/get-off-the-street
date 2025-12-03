@@ -142,6 +142,7 @@ class Game {
     async executeAction(action, result) {
         this.isAnimating = true;
         this.ui.setTravelButtonEnabled(false);
+        this.actionWasStopped = false;  // Track if action was stopped by event
 
         // Handle instant actions (any action with timeCost = 0)
         if (action.isInstant()) {
@@ -196,6 +197,7 @@ class Game {
             // Check if game ended or action should be stopped
             if (tickResults.gameOver || tickResults.stopAction) {
                 if (tickResults.stopAction) {
+                    this.actionWasStopped = true;  // Mark action as stopped by event
                     this.ui.addLog('Action stopped early.', 'neutral', this.player.day, this.timeManager.formatTime());
                 }
                 break;
@@ -320,8 +322,8 @@ class Game {
     completeAction(result, startStats) {
         // Final summary log removed - per-hour logs provide all details
 
-        // Award XP if action provides it
-        if (result.xpReward && result.xpReward > 0) {
+        // Award XP only if action wasn't stopped by an event
+        if (result.xpReward && result.xpReward > 0 && !this.actionWasStopped) {
             const levelsGained = this.player.addExperience(result.xpReward);
 
             // Log XP gain
@@ -331,6 +333,9 @@ class Game {
             if (levelsGained > 0) {
                 this.handleLevelUp(levelsGained);
             }
+        } else if (this.actionWasStopped && result.xpReward > 0) {
+            // Log that XP was not earned due to action interruption
+            this.ui.addLog('Action interrupted - no XP earned', 'neutral', this.player.day, this.timeManager.formatTime());
         }
 
         // Ensure final game state check (in case last hour tick triggered end condition)
