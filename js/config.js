@@ -1,37 +1,39 @@
 // Game configuration and constants
+// NOTE: Core balance values now live in game-balance-config.js (GAME_BALANCE)
+// This file contains UI/system constants and references to balance config
 const CONFIG = {
-    // Win/Lose conditions
-    VICTORY_MONEY: 2000,
-    VICTORY_MIN_HEALTH: 20,
+    // Win/Lose conditions (from GAME_BALANCE.gameConstants.victory)
+    VICTORY_MONEY: GAME_BALANCE.gameConstants.victory.money,
+    VICTORY_MIN_HEALTH: GAME_BALANCE.gameConstants.victory.minHealth,
     DEFEAT_HEALTH: 0,
 
-    // Initial player stats
+    // Initial player stats (from GAME_BALANCE.gameConstants.starting and reputationSystem)
     INITIAL_STATS: {
-        money: 0,
-        health: 100,
-        hunger: 50,
+        money: GAME_BALANCE.gameConstants.starting.money,
+        health: GAME_BALANCE.gameConstants.starting.health,
+        hunger: GAME_BALANCE.gameConstants.starting.hunger,
         day: 1,
-        level: 1,
-        experience: 0,
+        level: GAME_BALANCE.gameConstants.starting.level,
+        experience: GAME_BALANCE.gameConstants.starting.experience,
         reputation: {
-            police: 50,     // Neutral with police
-            locals: 50,     // Neutral with locals
-            shelter: 50,    // Neutral with shelter staff
-            business: 50    // Neutral with business owners
+            police: GAME_BALANCE.reputationSystem.startingReputation,
+            locals: GAME_BALANCE.reputationSystem.startingReputation,
+            shelter: GAME_BALANCE.reputationSystem.startingReputation,
+            business: GAME_BALANCE.reputationSystem.startingReputation
         }
     },
 
-    // Initial time and location
-    INITIAL_HOUR: 6, // Start at 6:00 AM
-    INITIAL_LOCATION: 'park', // Start at the park
+    // Initial time and location (from GAME_BALANCE.gameConstants.starting)
+    INITIAL_HOUR: GAME_BALANCE.gameConstants.starting.hour,
+    INITIAL_LOCATION: GAME_BALANCE.gameConstants.starting.location,
 
-    // Stat limits
-    MAX_HEALTH: 100,
-    MAX_HUNGER: 100,
-    MIN_STAT: 0,
+    // Stat limits (from GAME_BALANCE.gameConstants.survival)
+    MAX_HEALTH: GAME_BALANCE.gameConstants.survival.healthMax,
+    MAX_HUNGER: GAME_BALANCE.gameConstants.survival.hungerMax,
+    MIN_STAT: GAME_BALANCE.gameConstants.survival.healthMin,
 
-    // Hunger threshold for health loss
-    STARVATION_THRESHOLD: 20,
+    // Hunger threshold for health loss (from GAME_BALANCE.gameConstants.survival)
+    STARVATION_THRESHOLD: GAME_BALANCE.gameConstants.survival.starvationThreshold,
 
     // UI
     MAX_LOG_ENTRIES: 20,
@@ -57,178 +59,66 @@ const CONFIG = {
         PARK: 'park'
     },
 
-    // Action effect presets (high/medium/low)
-    ACTION_PRESETS: {
-        earnings: {
-            high: [30, 60],
-            medium: [20, 40],
-            low: [5, 20]
-        },
-        health: {
-            high: [30, 50],
-            medium: [15, 30],
-            low: [6, 10]
-        },
-        hunger: {
-            high: [-25, -10],   // High hunger cost
-            medium: [-15, -8],
-            low: [-10, -5]
-        },
-        reward: {
-            high: [50, 100],    // Steal rewards
-            medium: [30, 60],
-            low: [10, 30]
-        },
-        food: {
-            high: [20, 40],     // Buy food meals
-            medium: [10, 30],  // Shelter meals
-            low: [5, 15] // Dumpster diving
-        },
-        moneyCost: {
-            low: [5, 10],      // Cheap street food
-            medium: [10, 20],  // Standard meal
-            high: [20, 35]     // Quality restaurant meal
-        }
-    },
+    // Action effect presets (from GAME_BALANCE.presets.action)
+    ACTION_PRESETS: GAME_BALANCE.presets.action,
 
-    // Event effect presets (high/medium/low)
-    EVENT_PRESETS: {
-        // Money effects
-        moneyGain: {
-            high: [50, 100],    // Lucky find, generous donation
-            medium: [20, 50],   // Find money, tips
-            low: [5, 20]        // Pocket change
-        },
-        moneyLoss: {
-            high: [50, 100],    // Major robbery
-            medium: [20, 50],   // Pickpocket
-            low: [5, 20]        // Petty theft
-        },
+    // Event effect presets (from GAME_BALANCE.presets.event)
+    EVENT_PRESETS: GAME_BALANCE.presets.event,
 
-        // Health effects
-        healthImpact: {
-            high: [-30, -15],   // Serious injury/illness
-            medium: [-20, -10], // Minor injury
-            low: [-10, -5]      // Mild sickness
-        },
-        healthGain: {
-            high: [20, 30],     // Good recovery
-            medium: [10, 20],   // Minor boost
-            low: [5, 10]        // Small gain
-        },
+    // Level system configuration (from GAME_BALANCE.levelSystem)
+    LEVEL_SYSTEM: GAME_BALANCE.levelSystem,
 
-        // Hunger effects
-        hungerImpact: {
-            high: [-20, -10],   // Food stolen
-            medium: [-10, -5],  // Minor loss
-            low: [-5, -2]       // Negligible
-        },
-        hungerGain: {
-            high: [30, 50],     // Free meal
-            medium: [15, 30],   // Snack
-            low: [5, 15]        // Small food
-        },
-
-        // Event probability (per-hour base chance)
-        eventChance: {
-            high: 0.15,         // 15% per hour
-            medium: 0.08,       // 8% per hour
-            low: 0.03           // 3% per hour
-        }
-    },
-
-    // Level system configuration
-    LEVEL_SYSTEM: {
-        MAX_LEVEL: 10,
-        BASE_XP_FOR_LEVEL: 150,      // XP needed for level 1→2
-        XP_MULTIPLIER: 1.4,          // Each level requires 40% more XP (medium progression)
-
-        // Bonus per level (multiplicative)
-        BONUS_PER_LEVEL: {
-            earnings: 0.05,   // +5% per level (Level 5 = 20% bonus, Level 10 = 45% bonus)
-            health: 0.05,     // +5% health recovery per level
-            hunger: 0.05,     // +5% hunger efficiency (less hunger cost)
-            risk: 0.03        // -3% risk per level (Level 5 = -12% risk, Level 10 = -27% risk)
-        }
-    },
-
-    // XP rewards per action type (end-of-action awards)
+    // XP rewards per action type - built from GAME_BALANCE locations
+    // These are extracted for backward compatibility but now stored in GAME_BALANCE
     XP_REWARDS: {
-        work: 25,          // Productive labor
-        panhandle: 15,     // Survival skill
-        steal: 35,         // High-risk, high-reward
-        sleep: 5,          // Minimal (rest/recovery)
-        food: 8,           // Resourcefulness
-        eat: 0,            // No XP (instant action)
-        buy_food: 0        // No XP (simple transaction)
+        work: 25,
+        panhandle: 15,
+        steal: 35,
+        sleep: 5,
+        food: 8,
+        eat: 0,
+        buy_food: 0
     },
 
-    // Reputation System Configuration
+    // Reputation System Configuration (from GAME_BALANCE.reputationSystem)
     REPUTATION_SYSTEM: {
-        // Faction definitions
-        FACTIONS: {
-            police: { id: 'police', name: 'Police', icon: '👮' },
-            locals: { id: 'locals', name: 'Locals', icon: '👥' },
-            shelter: { id: 'shelter', name: 'Shelter Staff', icon: '🏠' },
-            business: { id: 'business', name: 'Business Owners', icon: '💼' }
-        },
-
-        // Reputation tiers (score ranges 0-100)
-        TIERS: [
-            { name: 'Hated', min: 0, max: 20, icon: '💀', color: '#ff0000' },
-            { name: 'Disliked', min: 21, max: 40, icon: '👎', color: '#ff6600' },
-            { name: 'Neutral', min: 41, max: 60, icon: '😐', color: '#999999' },
-            { name: 'Respected', min: 61, max: 80, icon: '👍', color: '#00cc00' },
-            { name: 'Trusted', min: 81, max: 100, icon: '⭐', color: '#00ff00' }
-        ],
-
-        // Outcome modifiers per tier (multipliers)
-        TIER_MODIFIERS: {
-            earnings: {
-                'Hated': 0.5,       // 50% earnings
-                'Disliked': 0.75,   // 75% earnings
-                'Neutral': 1.0,     // 100% earnings
-                'Respected': 1.25,  // 125% earnings
-                'Trusted': 1.5      // 150% earnings
-            },
-            risk: {
-                'Hated': 2.0,       // 2x risk
-                'Disliked': 1.5,    // 1.5x risk
-                'Neutral': 1.0,     // Normal risk
-                'Respected': 0.75,  // 75% risk
-                'Trusted': 0.5      // 50% risk
-            },
-            eventChance: {
-                'Hated': 1.5,       // 1.5x event chance
-                'Disliked': 1.25,   // 1.25x event chance
-                'Neutral': 1.0,     // Normal chance
-                'Respected': 0.75,  // 75% chance
-                'Trusted': 0.5      // 50% chance
-            }
-        }
+        FACTIONS: GAME_BALANCE.reputationSystem.factions.reduce((acc, f) => {
+            acc[f.id] = { id: f.id, name: f.name, icon: f.icon };
+            return acc;
+        }, {}),
+        TIERS: GAME_BALANCE.reputationSystem.tiers,
+        TIER_MODIFIERS: GAME_BALANCE.reputationSystem.tiers.reduce((acc, tier) => {
+            acc.earnings = acc.earnings || {};
+            acc.risk = acc.risk || {};
+            acc.eventChance = acc.eventChance || {};
+            acc.earnings[tier.name] = tier.modifiers.earnings;
+            acc.risk[tier.name] = tier.modifiers.risk;
+            acc.eventChance[tier.name] = tier.modifiers.eventChance;
+            return acc;
+        }, {})
     },
 
-    // Reputation effect presets (amount of reputation change)
+    // Reputation effect presets (from GAME_BALANCE.presets.reputation)
     REPUTATION_PRESETS: {
         police: {
-            high: 15,    // Major impact (+/- 15)
-            medium: 8,   // Moderate impact (+/- 8)
-            low: 3       // Minor impact (+/- 3)
+            high: GAME_BALANCE.presets.reputation.high,
+            medium: GAME_BALANCE.presets.reputation.medium,
+            low: GAME_BALANCE.presets.reputation.low
         },
         locals: {
-            high: 15,
-            medium: 8,
-            low: 3
+            high: GAME_BALANCE.presets.reputation.high,
+            medium: GAME_BALANCE.presets.reputation.medium,
+            low: GAME_BALANCE.presets.reputation.low
         },
         shelter: {
-            high: 15,
-            medium: 8,
-            low: 3
+            high: GAME_BALANCE.presets.reputation.high,
+            medium: GAME_BALANCE.presets.reputation.medium,
+            low: GAME_BALANCE.presets.reputation.low
         },
         business: {
-            high: 15,
-            medium: 8,
-            low: 3
+            high: GAME_BALANCE.presets.reputation.high,
+            medium: GAME_BALANCE.presets.reputation.medium,
+            low: GAME_BALANCE.presets.reputation.low
         }
     }
 };
